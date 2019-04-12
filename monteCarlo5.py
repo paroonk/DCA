@@ -4,6 +4,7 @@ import pickle
 import tqdm
 from functools import partial
 from multiprocessing import Pool
+from scipy.stats.mstats import gmean
 from sklearn.utils import resample
 
 import numpy as np
@@ -243,28 +244,32 @@ def simulation(forecast_year_, n_per_year_, init_S_, u_, sigma_, init_Cash_, i):
 
     df_IRR = df_IRR.append({}, ignore_index=True)
     df_IRR.loc[forecast_year_]['Year'] = 'Avg'
-    df_IRR.loc[forecast_year_]['LS'] = '{:.2%}'.format((df_IRR.iloc[:-1]['LS'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR.loc[forecast_year_]['DCA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['DCA'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR.loc[forecast_year_]['VA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR.loc[forecast_year_]['LS'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_IRR.loc[forecast_year_]['DCA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_IRR.loc[forecast_year_]['VA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_IRR = df_IRR.fillna('')
     df_IRR = df_IRR.set_index('Year')
 
     ### Summary of IRR ###
-    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'LS', 'DCA', 'VA'])
+    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'LS', 'DCA', 'VA', 'LS2', 'DCA2', 'VA2'])
     df_IRR_Sum_ = df_IRR_Sum_.append({}, ignore_index=True)
     df_IRR_Sum_['Iter'] = int(i + 1)
     df_IRR_Sum_['LS'] = df_IRR.loc['Avg']['LS']
     df_IRR_Sum_['DCA'] = df_IRR.loc['Avg']['DCA']
     df_IRR_Sum_['VA'] = df_IRR.loc['Avg']['VA']
 
+    for col in df_IRR.columns.values:
+        df_IRR[col] = df_IRR[col].str.rstrip('%').astype('float') / 100.0
+    df_IRR.to_excel('output{}.xlsx'.format(i))
+
     # if i == 0:
-        # print()
-        # print(df_Forecast)
-        # print(df_LS[0])
-        # print(df_DCA[0])
-        # for j in df_VA:
-        #     print(df_VA[j])
-        # print(df_IRR)
+    # print()
+    # print(df_Forecast)
+    # print(df_LS[0])
+    # print(df_DCA[0])
+    # for j in df_VA:
+    #     print(df_VA[j])
+    # print(df_IRR)
 
     return df_IRR_Sum_.values.tolist()
 
@@ -274,7 +279,7 @@ if __name__ == '__main__':
     start = time.time()
 
     ### Simulation Config ###
-    iter = 5
+    iter = 3
     forecast_year = 10
     n_per_year = 12
     np.random.seed(None)
@@ -291,7 +296,7 @@ if __name__ == '__main__':
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, forecast_year, n_per_year, init_S, u, sigma, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_IRR_Sum = pd.DataFrame(results, columns=['Iter', 'LS', 'DCA', 'VA'], dtype='object')
+    df_IRR_Sum = pd.DataFrame(results, columns=['Iter', 'LS', 'DCA', 'VA', 'LS2', 'DCA2', 'VA2'], dtype='object')
     df_IRR_Sum.sort_values(by='Iter', inplace=True)
 
     df_IRR_Sum = df_IRR_Sum.append({}, ignore_index=True)
@@ -303,4 +308,5 @@ if __name__ == '__main__':
     df_IRR_Sum = df_IRR_Sum.set_index('Iter')
 
     print(df_IRR_Sum)
+    # df_IRR_Sum.to_excel('output.xlsx')
     # print(df_IRR_Sum.loc[iter])
