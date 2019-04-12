@@ -199,66 +199,66 @@ def VA(df_Forecast_, n_per_year_, init_Cash_):
 
 
 def simulation(forecast_year_, n_per_year_, init_S_, u_, sigma_, init_Cash_, i):
-    # dt = 1 / n_per_year_
-    #
-    # ### df_Forecast Price ###
-    # df_Forecast = pd.DataFrame(
-    #     columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S'])
-    #
-    # for t in range(0, (forecast_year_ * n_per_year_) + 1):
-    #     df_Forecast = df_Forecast.append({}, ignore_index=True)
-    #     df_Forecast.loc[t]['Month'] = t
-    #
-    #     if t == 0:
-    #         df_Forecast.loc[t]['S'] = init_S_
-    #     elif t > 0 and (forecast_year_ * n_per_year_) + 1:
-    #         df_Forecast.loc[t]['u.dt'] = u_ * dt
-    #         df_Forecast.loc[t]['S(u.dt)'] = df_Forecast.loc[t - 1]['S'] * df_Forecast.loc[t]['u.dt']
-    #         df_Forecast.loc[t]['N'] = np.random.normal()
-    #         df_Forecast.loc[t]['N.sigma.sqrt(dt)'] = df_Forecast.loc[t]['N'] * sigma_ * np.sqrt(dt)
-    #         df_Forecast.loc[t]['S(N.sigma.sqrt(dt))'] = df_Forecast.loc[t - 1]['S'] * df_Forecast.loc[t]['N.sigma.sqrt(dt)']
-    #         df_Forecast.loc[t]['dS'] = df_Forecast.loc[t]['S(u.dt)'] + df_Forecast.loc[t]['S(N.sigma.sqrt(dt))']
-    #         df_Forecast.loc[t]['S'] = df_Forecast.loc[t - 1]['S'] + df_Forecast.loc[t]['dS']
-    #
-    # df_Forecast = df_Forecast.fillna('')
-    # df_Forecast['Month'] = df_Forecast['Month'].astype('int')
-    # df_Forecast = df_Forecast.set_index('Month')
-    #
-    # ### Portfolio Simulation ###
-    # df_IRR = pd.DataFrame(columns=['Year', 'LS', 'DCA', 'VA'])
-    #
-    # df_LS = {}
-    # df_DCA = {}
-    # df_VA = {}
-    # for year in range(forecast_year_):
-    #     df_LS[year] = LS(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
-    #     df_DCA[year] = DCA(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
-    #     df_VA[year] = VA(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
-    #
-    #     df_IRR = df_IRR.append({}, ignore_index=True)
-    #     df_IRR.loc[year]['Year'] = year + 1
-    #     df_IRR.loc[year]['LS'] = df_LS[year].loc[n_per_year_]['IRR']
-    #     df_IRR.loc[year]['DCA'] = df_DCA[year].loc[n_per_year_]['IRR']
-    #     df_IRR.loc[year]['VA'] = df_VA[year].loc[n_per_year_]['IRR']
-    #
-    # df_IRR = df_IRR.append({}, ignore_index=True)
-    # df_IRR.loc[forecast_year_]['Year'] = 'Avg'
-    # df_IRR.loc[forecast_year_]['LS'] = '{:.2%}'.format((df_IRR.iloc[:-1]['LS'].str.rstrip('%').astype('float') / 100.0).mean())
-    # df_IRR.loc[forecast_year_]['DCA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['DCA'].str.rstrip('%').astype('float') / 100.0).mean())
-    # df_IRR.loc[forecast_year_]['VA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['VA'].str.rstrip('%').astype('float') / 100.0).mean())
-    # df_IRR = df_IRR.fillna('')
-    # df_IRR = df_IRR.set_index('Year')
-    #
-    # ### Summary of IRR ###
-    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'LS', 'DCA', 'VA'])
-    # df_IRR_Sum_ = df_IRR_Sum_.append({}, ignore_index=True)
-    # df_IRR_Sum_['Iter'] = int(i + 1)
-    # df_IRR_Sum_['LS'] = df_IRR.loc['Avg']['LS']
-    # df_IRR_Sum_['DCA'] = df_IRR.loc['Avg']['DCA']
-    # df_IRR_Sum_['VA'] = df_IRR.loc['Avg']['VA']
+    dt = 1 / n_per_year_
 
-    if i == 0:
-        print()
+    ### df_Forecast Price ###
+    df_Forecast = pd.DataFrame(
+        columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S'])
+
+    for t in range(0, (forecast_year_ * n_per_year_) + 1):
+        df_Forecast = df_Forecast.append({}, ignore_index=True)
+        df_Forecast.loc[t]['Month'] = t
+
+        if t == 0:
+            df_Forecast.loc[t]['S'] = init_S_
+        elif t > 0 and (forecast_year_ * n_per_year_) + 1:
+            df_Forecast.loc[t]['u.dt'] = u_ * dt
+            df_Forecast.loc[t]['S(u.dt)'] = df_Forecast.loc[t - 1]['S'] * df_Forecast.loc[t]['u.dt']
+            df_Forecast.loc[t]['N'] = np.random.normal()
+            df_Forecast.loc[t]['N.sigma.sqrt(dt)'] = df_Forecast.loc[t]['N'] * sigma_ * np.sqrt(dt)
+            df_Forecast.loc[t]['S(N.sigma.sqrt(dt))'] = df_Forecast.loc[t - 1]['S'] * df_Forecast.loc[t]['N.sigma.sqrt(dt)']
+            df_Forecast.loc[t]['dS'] = df_Forecast.loc[t]['S(u.dt)'] + df_Forecast.loc[t]['S(N.sigma.sqrt(dt))']
+            df_Forecast.loc[t]['S'] = df_Forecast.loc[t - 1]['S'] + df_Forecast.loc[t]['dS']
+
+    df_Forecast = df_Forecast.fillna('')
+    df_Forecast['Month'] = df_Forecast['Month'].astype('int')
+    df_Forecast = df_Forecast.set_index('Month')
+
+    ### Portfolio Simulation ###
+    df_IRR = pd.DataFrame(columns=['Year', 'LS', 'DCA', 'VA'])
+
+    df_LS = {}
+    df_DCA = {}
+    df_VA = {}
+    for year in range(forecast_year_):
+        df_LS[year] = LS(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
+        df_DCA[year] = DCA(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
+        df_VA[year] = VA(df_Forecast.iloc[(year * n_per_year_):((year + 1) * n_per_year_) + 1].reset_index(), n_per_year_, init_Cash_)
+
+        df_IRR = df_IRR.append({}, ignore_index=True)
+        df_IRR.loc[year]['Year'] = year + 1
+        df_IRR.loc[year]['LS'] = df_LS[year].loc[n_per_year_]['IRR']
+        df_IRR.loc[year]['DCA'] = df_DCA[year].loc[n_per_year_]['IRR']
+        df_IRR.loc[year]['VA'] = df_VA[year].loc[n_per_year_]['IRR']
+
+    df_IRR = df_IRR.append({}, ignore_index=True)
+    df_IRR.loc[forecast_year_]['Year'] = 'Avg'
+    df_IRR.loc[forecast_year_]['LS'] = '{:.2%}'.format((df_IRR.iloc[:-1]['LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR.loc[forecast_year_]['DCA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR.loc[forecast_year_]['VA'] = '{:.2%}'.format((df_IRR.iloc[:-1]['VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR = df_IRR.fillna('')
+    df_IRR = df_IRR.set_index('Year')
+
+    ### Summary of IRR ###
+    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'LS', 'DCA', 'VA'])
+    df_IRR_Sum_ = df_IRR_Sum_.append({}, ignore_index=True)
+    df_IRR_Sum_['Iter'] = int(i + 1)
+    df_IRR_Sum_['LS'] = df_IRR.loc['Avg']['LS']
+    df_IRR_Sum_['DCA'] = df_IRR.loc['Avg']['DCA']
+    df_IRR_Sum_['VA'] = df_IRR.loc['Avg']['VA']
+
+    # if i == 0:
+        # print()
         # print(df_Forecast)
         # print(df_LS[0])
         # print(df_DCA[0])
