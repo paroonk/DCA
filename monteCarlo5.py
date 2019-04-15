@@ -21,7 +21,7 @@ n_per_year = 12
 
 def monte_carlo(forecast_year_):
     global n_per_year
-    df = pd.DataFrame(columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S'])
+    df = pd.DataFrame(columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S', 'RR'])
 
     ### Monte Carlo Config ###
     df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
@@ -44,12 +44,13 @@ def monte_carlo(forecast_year_):
             df.loc[t]['S(N.sigma.sqrt(dt))'] = df.loc[t - 1]['S'] * df.loc[t]['N.sigma.sqrt(dt)']
             df.loc[t]['dS'] = df.loc[t]['S(u.dt)'] + df.loc[t]['S(N.sigma.sqrt(dt))']
             df.loc[t]['S'] = df.loc[t - 1]['S'] + df.loc[t]['dS']
+            df.loc[t]['RR'] = (df.loc[t]['S'] - df.loc[t - 1]['S']) / df.loc[t - 1]['S']
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
     df = df.set_index('Month')
 
-    return df['S']
+    return df
 
 
 def direct(forecast_year_):
@@ -75,7 +76,7 @@ def direct(forecast_year_):
     df['Month'] = df['Month'].astype('int')
     df = df.set_index('Month')
 
-    return df['S']
+    return df
 
 
 def bootstrap(forecast_year_):
@@ -102,7 +103,7 @@ def bootstrap(forecast_year_):
     df['Month'] = df['Month'].astype('int')
     df = df.set_index('Month')
 
-    return df['S']
+    return df
 
 
 def LS(df_Stock_, init_Cash_):
@@ -292,9 +293,14 @@ def VA(df_Stock_, init_Cash_):
     return df
 
 
-def simulation(forecast_year_, init_Cash_, i):
-    ### Stock Price ###
-    method = 1
+def simulation(method, forecast_year_, init_Cash_, i):
+    ### Portfolio Simulation ###
+    global n_per_year
+    df_IRR = pd.DataFrame(columns=['Year', 'SET_Final', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'LS', 'DCA', 'VA'])
+    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'SET_Final', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'LS', 'DCA', 'VA'])
+    df_LS = {}
+    df_DCA = {}
+    df_VA = {}
     if method == 1:
         df_Stock = monte_carlo(forecast_year_)
     elif method == 2:
@@ -302,18 +308,10 @@ def simulation(forecast_year_, init_Cash_, i):
     elif method == 3:
         df_Stock = bootstrap(forecast_year_)
 
-    ### Portfolio Simulation ###
-    global n_per_year
-    df_IRR = pd.DataFrame(columns=['Year', 'SET', 'LS', 'DCA', 'VA'])
-    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'SET', 'LS', 'DCA', 'VA'])
-    df_LS = {}
-    df_DCA = {}
-    df_VA = {}
-
     for year in range(forecast_year_):
-        df_LS[year] = LS(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1].reset_index(drop=True), init_Cash_)
-        df_DCA[year] = DCA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1].reset_index(drop=True), init_Cash_)
-        df_VA[year] = VA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1].reset_index(drop=True), init_Cash_)
+        df_LS[year] = LS(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
+        df_DCA[year] = DCA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
+        df_VA[year] = VA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
 
         df_IRR = df_IRR.append({}, ignore_index=True)
         df_IRR.loc[year]['Year'] = year + 1
@@ -323,7 +321,12 @@ def simulation(forecast_year_, init_Cash_, i):
 
     df_IRR = df_IRR.append({}, ignore_index=True)
     df_IRR.loc[forecast_year_]['Year'] = 'Avg'
-    df_IRR.loc[forecast_year_]['SET'] = df_Stock.iloc[-1]
+    df_IRR.loc[forecast_year_]['SET_Final'] = df_Stock.iloc[-1]['S']
+    df_IRR.loc[forecast_year_]['SET_Mean'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].mean() * n_per_year)
+    df_IRR.loc[forecast_year_]['SET_Std'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_IRR.loc[forecast_year_]['SET_Skew'] = df_Stock.iloc[1:]['RR'].skew()
+    df_IRR.loc[forecast_year_]['SET_Kurt'] = df_Stock.iloc[1:]['RR'].kurt()
+
     df_IRR.loc[forecast_year_]['LS'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_IRR.loc[forecast_year_]['DCA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_IRR.loc[forecast_year_]['VA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
@@ -333,7 +336,11 @@ def simulation(forecast_year_, init_Cash_, i):
     ### Summary of IRR ###
     df_IRR_Sum_ = df_IRR_Sum_.append({}, ignore_index=True)
     df_IRR_Sum_['Iter'] = int(i + 1)
-    df_IRR_Sum_['SET'] = df_IRR.loc['Avg']['SET']
+    df_IRR_Sum_['SET_Final'] = df_IRR.loc['Avg']['SET_Final']
+    df_IRR_Sum_['SET_Mean'] = df_IRR.loc['Avg']['SET_Mean']
+    df_IRR_Sum_['SET_Std'] = df_IRR.loc['Avg']['SET_Std']
+    df_IRR_Sum_['SET_Skew'] = df_IRR.loc['Avg']['SET_Skew']
+    df_IRR_Sum_['SET_Kurt'] = df_IRR.loc['Avg']['SET_Kurt']
     df_IRR_Sum_['LS'] = df_IRR.loc['Avg']['LS']
     df_IRR_Sum_['DCA'] = df_IRR.loc['Avg']['DCA']
     df_IRR_Sum_['VA'] = df_IRR.loc['Avg']['VA']
@@ -356,7 +363,8 @@ def simulation(forecast_year_, init_Cash_, i):
 
 if __name__ == '__main__':
     ### Simulation Config ###
-    iter = 10
+    method = 3  # 1: Monte Carlo, 2: Direct Test, 3: Bootstrap
+    iter = 100
     forecast_year = 10
     np.random.seed(None)
 
@@ -365,15 +373,20 @@ if __name__ == '__main__':
 
     results = []
     pool = Pool()
-    for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, forecast_year, init_Cash), range(iter)), total=iter):
+    iter = iter if method != 2 else 1
+    for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, method, forecast_year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_IRR_Sum = pd.DataFrame(results, columns=['Iter', 'SET', 'LS', 'DCA', 'VA'], dtype='object')
+    df_IRR_Sum = pd.DataFrame(results, columns=['Iter', 'SET_Final', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'LS', 'DCA', 'VA'], dtype='object')
     df_IRR_Sum.sort_values(by='Iter', inplace=True)
 
     df_IRR_Sum = df_IRR_Sum.append({}, ignore_index=True)
     df_IRR_Sum.iloc[-1]['Iter'] = 'Avg'
-    df_IRR_Sum.iloc[-1]['SET'] = '{:.2f}'.format(df_IRR_Sum.iloc[:-1]['SET'].mean())
+    df_IRR_Sum.iloc[-1]['SET_Final'] = '{:.2f}'.format(df_IRR_Sum.iloc[:-1]['SET_Final'].mean())
+    df_IRR_Sum.iloc[-1]['SET_Mean'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['SET_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR_Sum.iloc[-1]['SET_Std'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['SET_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_IRR_Sum.iloc[-1]['SET_Skew'] = '{:.2f}'.format(df_IRR_Sum.iloc[:-1]['SET_Skew'].mean())
+    df_IRR_Sum.iloc[-1]['SET_Kurt'] = '{:.2f}'.format(df_IRR_Sum.iloc[:-1]['SET_Kurt'].mean())
     df_IRR_Sum.iloc[-1]['LS'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['LS'].str.rstrip('%').astype('float') / 100.0).mean())
     df_IRR_Sum.iloc[-1]['DCA'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['DCA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_IRR_Sum.iloc[-1]['VA'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['VA'].str.rstrip('%').astype('float') / 100.0).mean())
