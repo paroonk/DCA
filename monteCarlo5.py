@@ -348,23 +348,24 @@ def simulation(method, forecast_year_, init_Cash_, i):
         df_IRR.loc[year]['DCA'] = df_DCA[year].loc[n_per_year]['IRR']
         df_IRR.loc[year]['VA'] = df_VA[year].loc[n_per_year]['IRR']
 
-        if i == 0 and year == 0:
+        if i == 0:
 
-            sheet_name = 'Stock'
-            df = df_Stock
-            if method == 1:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
-            elif method == 2:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
-            elif method == 3:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+            if year == 0:
+                sheet_name = 'Stock'
+                df = df_Stock
+                if method == 1:
+                    df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
+                    df.loc[1:] = df.loc[1:].astype(float).round(4)
+                elif method == 2:
+                    df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
+                    df.loc[1:] = df.loc[1:].astype(float).round(4)
+                elif method == 3:
+                    df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
+                    df.loc[1:] = df.loc[1:].astype(float).round(4)
+                df.to_excel(writer, sheet_name=sheet_name)
+                worksheet = writer.sheets[sheet_name]
+                for col, width in enumerate(get_col_widths(df, index=False), 1):
+                    worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
             body_fmt = {
                 'B': float_fmt,
@@ -386,7 +387,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
             df = df_LS[year]
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
+            df.to_excel(writer, sheet_name=sheet_name, startrow=year * 15)
             worksheet = writer.sheets[sheet_name]
             for col, width in enumerate(get_col_widths(df, index=False), 1):
                 worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
@@ -395,7 +396,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
             df = df_DCA[year]
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
+            df.to_excel(writer, sheet_name=sheet_name, startrow=year * 15)
             worksheet = writer.sheets[sheet_name]
             for col, width in enumerate(get_col_widths(df, index=False), 1):
                 worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
@@ -404,7 +405,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
             df = df_VA[year]
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
+            df.to_excel(writer, sheet_name=sheet_name, startrow=year * 15)
             worksheet = writer.sheets[sheet_name]
             for col, width in enumerate(get_col_widths(df, index=False), 1):
                 worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
