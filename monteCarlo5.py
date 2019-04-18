@@ -512,7 +512,12 @@ if __name__ == '__main__':
 
     # print(df_IRR_Sum)
 
-    writer = pd.ExcelWriter('Out_IRR_Sum.xlsx')
+    if method == 1:
+        writer = pd.ExcelWriter('Out_IRR_MonteCarlo.xlsx')
+    elif method == 2:
+        writer = pd.ExcelWriter('Out_IRR_DirectTest.xlsx')
+    elif method == 3:
+        writer = pd.ExcelWriter('Out_IRR_Bootstrap.xlsx')
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
