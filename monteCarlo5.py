@@ -351,7 +351,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
         if i == 0 and year == 0:
 
             sheet_name = 'Stock'
-            df = df_Stock
+            df = df_Stock.copy()
             if method == 1:
                 df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
                 df.loc[1:] = df.loc[1:].astype(float).round(4)
@@ -383,7 +383,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
                 'O': pct_fmt,
             }
             sheet_name = 'LS'
-            df = df_LS[year]
+            df = df_LS[year].copy()
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
             df.to_excel(writer, sheet_name=sheet_name)
@@ -392,7 +392,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
                 worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
             sheet_name = 'DCA'
-            df = df_DCA[year]
+            df = df_DCA[year].copy()
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
             df.to_excel(writer, sheet_name=sheet_name)
@@ -401,7 +401,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
                 worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
             sheet_name = 'VA'
-            df = df_VA[year]
+            df = df_VA[year].copy()
             df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
             df = df.round(4)
             df.to_excel(writer, sheet_name=sheet_name)
@@ -434,18 +434,18 @@ def simulation(method, forecast_year_, init_Cash_, i):
             'I': pct_fmt,
         }
         sheet_name = 'IRR'
-        df = df_IRR
+        df = df_IRR.copy()
         df.loc['Avg', 'SET_Final'] = df.loc['Avg', 'SET_Final'].astype(float).round(4)
         df.loc['Avg', 'RR_Mean'] = round(float(df.loc['Avg', 'RR_Mean'].rstrip('%')) / 100.0, 4)
         df.loc['Avg', 'RR_Std'] = round(float(df.loc['Avg', 'RR_Std'].rstrip('%')) / 100.0, 4)
         df.loc['Avg', 'RR_Skew'] = df.loc['Avg', 'RR_Skew'].astype(float).round(4)
         df.loc['Avg', 'RR_Kurt'] = df.loc['Avg', 'RR_Kurt'].astype(float).round(4)
         df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'LS'] = (
-                    df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'LS'].str.rstrip('%').astype('float') / 100.0).round(4)
+                df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'LS'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'DCA'] = (
-                    df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'DCA'].str.rstrip('%').astype('float') / 100.0).round(4)
+                df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'DCA'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'VA'] = (
-                    df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'VA'].str.rstrip('%').astype('float') / 100.0).round(4)
+                df.loc[list(range(1, forecast_year_ + 1)) + ['Avg'], 'VA'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.to_excel(writer, sheet_name=sheet_name)
         worksheet = writer.sheets[sheet_name]
         for col, width in enumerate(get_col_widths(df, index=False), 1):
@@ -479,9 +479,10 @@ def get_col_widths(df, index=True):
 if __name__ == '__main__':
     ### Simulation Config ###
     method = 1  # 1: Monte Carlo, 2: Direct Test, 3: Bootstrap
-    iter = 5
+
+    iter = 10000
     forecast_year = 10
-    np.random.seed(None)
+    np.random.seed(42)
 
     ### Initial value ###
     init_Cash = 120000.0
@@ -510,7 +511,7 @@ if __name__ == '__main__':
     df_IRR_Sum.rename(columns={'LS': 'Simulation_LS', 'DCA': 'Simulation_DCA', 'VA': 'Simulation_VA'}, inplace=True)
     df_IRR_Sum.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_IRR_Sum.columns])
 
-    # print(df_IRR_Sum)
+    print(df_IRR_Sum)
 
     if method == 1:
         writer = pd.ExcelWriter('Out_IRR_MonteCarlo.xlsx')
@@ -523,7 +524,7 @@ if __name__ == '__main__':
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
 
     sheet_name = 'IRR_Sum'
-    df = df_IRR_Sum
+    df = df_IRR_Sum.copy()
     df['RR', 'Mean'] = df['RR', 'Mean'].str.rstrip('%').astype('float') / 100.0
     df['RR', 'Std'] = df['RR', 'Std'].str.rstrip('%').astype('float') / 100.0
     df['Simulation', 'LS'] = df['Simulation', 'LS'].str.rstrip('%').astype('float') / 100.0
