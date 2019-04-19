@@ -14,14 +14,19 @@ pd.set_option('expand_frame_repr', False)
 pd.options.display.float_format = '{:.2f}'.format
 style.use('ggplot')
 n_per_year = 12
-
+SET_years = 5
 
 def monte_carlo(forecast_year_):
     global n_per_year
+    global SET_years
     df = pd.DataFrame(columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S', 'RR'])
 
     ### Monte Carlo Config ###
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    if SET_years == 10:
+        sheet_name = 'SET10Y'
+    else:
+        sheet_name = 'SET5Y'
+    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
     init_S = df_SET.iloc[0]['SETi']  # 449.96
     u = df_SET.iloc[1:]['RR'].mean() * n_per_year  # 0.1376
     sigma = df_SET.iloc[1:]['RR'].std() * np.sqrt(n_per_year)  # 0.1580
@@ -52,9 +57,14 @@ def monte_carlo(forecast_year_):
 
 def direct(forecast_year_):
     global n_per_year
+    global SET_years
     df = pd.DataFrame(columns=['Month', 'RR', 'S'])
 
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    if SET_years == 10:
+        sheet_name = 'SET10Y'
+    else:
+        sheet_name = 'SET5Y'
+    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
     RR = df_SET.iloc[1:]['RR'].values
     SETi = df_SET.iloc[1:]['SETi'].values
     init_S = df_SET.iloc[0]['SETi']
@@ -78,9 +88,14 @@ def direct(forecast_year_):
 
 def bootstrap(forecast_year_):
     global n_per_year
+    global SET_years
     df = pd.DataFrame(columns=['Month', 'RR', 'dS', 'S'])
 
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    if SET_years == 10:
+        sheet_name = 'SET10Y'
+    else:
+        sheet_name = 'SET5Y'
+    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
     RR = df_SET.iloc[1:]['RR'].values
     RR = resample(RR, replace=True, n_samples=forecast_year_ * n_per_year, random_state=None)
     init_S = df_SET.iloc[0]['SETi']
@@ -300,6 +315,16 @@ def simulation(method, forecast_year_, init_Cash_, i):
     df_VA = {}
 
     if method == 1:
+        df_Stock = direct(forecast_year_)
+        writer = pd.ExcelWriter('Out_Sim_DirectTest.xlsx')
+        workbook = writer.book
+        float_fmt = workbook.add_format({'num_format': '#,##0.00'})
+        pct_fmt = workbook.add_format({'num_format': '0.00%'})
+        body_fmt = {
+            'B': float_fmt,
+            'C': float_fmt,
+        }
+    elif method == 2:
         df_Stock = monte_carlo(forecast_year_)
         writer = pd.ExcelWriter('Out_Sim_MonteCarlo.xlsx')
         workbook = writer.book
@@ -314,16 +339,6 @@ def simulation(method, forecast_year_, init_Cash_, i):
             'G': float_fmt,
             'H': float_fmt,
             'I': float_fmt,
-        }
-    elif method == 2:
-        df_Stock = direct(forecast_year_)
-        writer = pd.ExcelWriter('Out_Sim_DirectTest.xlsx')
-        workbook = writer.book
-        float_fmt = workbook.add_format({'num_format': '#,##0.00'})
-        pct_fmt = workbook.add_format({'num_format': '0.00%'})
-        body_fmt = {
-            'B': float_fmt,
-            'C': float_fmt,
         }
     elif method == 3:
         df_Stock = bootstrap(forecast_year_)
@@ -352,15 +367,8 @@ def simulation(method, forecast_year_, init_Cash_, i):
 
             sheet_name = 'Stock'
             df = df_Stock.copy()
-            if method == 1:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
-            elif method == 2:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
-            elif method == 3:
-                df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-                df.loc[1:] = df.loc[1:].astype(float).round(4)
+            df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
+            df.loc[1:] = df.loc[1:].astype(float).round(4)
             df.to_excel(writer, sheet_name=sheet_name)
             worksheet = writer.sheets[sheet_name]
             for col, width in enumerate(get_col_widths(df, index=False), 1):
@@ -478,7 +486,7 @@ def get_col_widths(df, index=True):
 
 if __name__ == '__main__':
     ### Simulation Config ###
-    method = 1  # 1: Monte Carlo, 2: Direct Test, 3: Bootstrap
+    method = 3  # 1: Monte Carlo, 2: Direct Test, 3: Bootstrap
 
     iter = 10000
     forecast_year = 10
@@ -489,7 +497,7 @@ if __name__ == '__main__':
 
     results = []
     pool = Pool()
-    iter = iter if method != 2 else 1
+    iter = iter if method != 1 else 1
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, method, forecast_year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
@@ -514,9 +522,9 @@ if __name__ == '__main__':
     print(df_IRR_Sum)
 
     if method == 1:
-        writer = pd.ExcelWriter('Out_IRR_MonteCarlo.xlsx')
-    elif method == 2:
         writer = pd.ExcelWriter('Out_IRR_DirectTest.xlsx')
+    elif method == 2:
+        writer = pd.ExcelWriter('Out_IRR_MonteCarlo.xlsx')
     elif method == 3:
         writer = pd.ExcelWriter('Out_IRR_Bootstrap.xlsx')
     workbook = writer.book
