@@ -14,19 +14,44 @@ pd.set_option('expand_frame_repr', False)
 pd.options.display.float_format = '{:.2f}'.format
 style.use('ggplot')
 n_per_year = 12
-SET_years = 5
+
+### Simulation Config ###
+method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+iter = 10000
+forecast_year = 10
+
+def direct(forecast_year_):
+    global n_per_year
+    df = pd.DataFrame(columns=['Month', 'RR', 'S'])
+
+    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    RR = df_SET.iloc[1:]['RR'].values
+    SETi = df_SET.iloc[1:]['SETi'].values
+    init_S = df_SET.iloc[0]['SETi']
+
+    for t in range(0, (forecast_year_ * n_per_year) + 1):
+        df = df.append({}, ignore_index=True)
+        df.loc[t]['Month'] = t
+
+        if t == 0:
+            df.loc[t]['S'] = init_S
+        elif t > 0 and (forecast_year_ * n_per_year) + 1:
+            df.loc[t]['RR'] = RR[t - 1]
+            df.loc[t]['S'] = SETi[t - 1]
+
+    df = df.fillna('')
+    df['Month'] = df['Month'].astype('int')
+    df = df.set_index('Month')
+
+    return df
+
 
 def monte_carlo(forecast_year_):
     global n_per_year
-    global SET_years
     df = pd.DataFrame(columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S', 'RR'])
 
     ### Monte Carlo Config ###
-    if SET_years == 10:
-        sheet_name = 'SET10Y'
-    else:
-        sheet_name = 'SET5Y'
-    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
+    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
     init_S = df_SET.iloc[0]['SETi']  # 449.96
     u = df_SET.iloc[1:]['RR'].mean() * n_per_year  # 0.1376
     sigma = df_SET.iloc[1:]['RR'].std() * np.sqrt(n_per_year)  # 0.1580
@@ -55,47 +80,11 @@ def monte_carlo(forecast_year_):
     return df
 
 
-def direct(forecast_year_):
-    global n_per_year
-    global SET_years
-    df = pd.DataFrame(columns=['Month', 'RR', 'S'])
-
-    if SET_years == 10:
-        sheet_name = 'SET10Y'
-    else:
-        sheet_name = 'SET5Y'
-    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
-    RR = df_SET.iloc[1:]['RR'].values
-    SETi = df_SET.iloc[1:]['SETi'].values
-    init_S = df_SET.iloc[0]['SETi']
-
-    for t in range(0, (forecast_year_ * n_per_year) + 1):
-        df = df.append({}, ignore_index=True)
-        df.loc[t]['Month'] = t
-
-        if t == 0:
-            df.loc[t]['S'] = init_S
-        elif t > 0 and (forecast_year_ * n_per_year) + 1:
-            df.loc[t]['RR'] = RR[t - 1]
-            df.loc[t]['S'] = SETi[t - 1]
-
-    df = df.fillna('')
-    df['Month'] = df['Month'].astype('int')
-    df = df.set_index('Month')
-
-    return df
-
-
 def bootstrap(forecast_year_):
     global n_per_year
-    global SET_years
     df = pd.DataFrame(columns=['Month', 'RR', 'dS', 'S'])
 
-    if SET_years == 10:
-        sheet_name = 'SET10Y'
-    else:
-        sheet_name = 'SET5Y'
-    df_SET = pd.read_excel('SET.xlsx', sheet_name=sheet_name)
+    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
     RR = df_SET.iloc[1:]['RR'].values
     RR = resample(RR, replace=True, n_samples=forecast_year_ * n_per_year, random_state=None)
     init_S = df_SET.iloc[0]['SETi']
@@ -485,13 +474,6 @@ def get_col_widths(df, index=True):
 
 
 if __name__ == '__main__':
-    ### Simulation Config ###
-    method = 3  # 1: Monte Carlo, 2: Direct Test, 3: Bootstrap
-
-    iter = 10000
-    forecast_year = 10
-    np.random.seed(42)
-
     ### Initial value ###
     init_Cash = 120000.0
 
