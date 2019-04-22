@@ -16,8 +16,8 @@ style.use('ggplot')
 n_per_year = 12
 
 ### Simulation Config ###
-method = 1  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
-iter = 3
+method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+iter = 10000
 forecast_year = 10
 
 
@@ -113,7 +113,7 @@ def LS(df_Stock_, init_Cash_):
     df = pd.DataFrame(
         columns=['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume', 'Net Inv.Asset Volume',
                  'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Change in Inv.Asset Value', 'Net Inv.Asset Value',
-                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Cost', 'Avg. Cost Per Unit', 'Total Wealth', 'Profit/Loss', 'IRR'])
+                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Profit/Loss', 'IRR'])
 
     for t in range(0, n_per_year + 1):
         df = df.append({}, ignore_index=True)
@@ -130,8 +130,6 @@ def LS(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t in range(1, n_per_year):
@@ -146,8 +144,6 @@ def LS(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t == n_per_year:
@@ -163,8 +159,6 @@ def LS(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
             df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
@@ -179,7 +173,7 @@ def DCA(df_Stock_, init_Cash_):
     df = pd.DataFrame(
         columns=['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume', 'Net Inv.Asset Volume',
                  'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Change in Inv.Asset Value', 'Net Inv.Asset Value',
-                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Cost', 'Avg. Cost Per Unit', 'Total Wealth', 'Profit/Loss', 'IRR'])
+                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Profit/Loss', 'IRR'])
 
     for t in range(0, n_per_year + 1):
         df = df.append({}, ignore_index=True)
@@ -196,8 +190,6 @@ def DCA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t in range(1, n_per_year):
@@ -212,8 +204,6 @@ def DCA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t == n_per_year:
@@ -228,8 +218,6 @@ def DCA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
             df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
@@ -245,7 +233,7 @@ def VA(df_Stock_, init_Cash_):
     df = pd.DataFrame(
         columns=['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume', 'Net Inv.Asset Volume',
                  'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Change in Inv.Asset Value', 'Net Inv.Asset Value',
-                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Cost', 'Avg. Cost Per Unit', 'Total Wealth', 'Profit/Loss', 'IRR'])
+                 'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Profit/Loss', 'IRR'])
 
     for t in range(0, n_per_year + 1):
         df = df.append({}, ignore_index=True)
@@ -264,8 +252,6 @@ def VA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t in range(1, n_per_year):
@@ -282,8 +268,6 @@ def VA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
         elif t == n_per_year:
@@ -298,8 +282,6 @@ def VA(df_Stock_, init_Cash_):
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
             df.loc[t]['Net Inv.Asset Value'] = df.loc[t]['Net Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
-            df.loc[t]['Total Cost'] = df.loc[t - 1]['Total Cost'] + df.loc[t]['Change in Inv.Asset Value']
-            df.loc[t]['Avg. Cost Per Unit'] = (df.loc[t]['Total Cost'] / df.loc[t]['Net Inv.Asset Volume']) if df.loc[t]['Net Inv.Asset Volume'] != 0.0 else 0.0
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash_
             df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
@@ -313,8 +295,10 @@ def VA(df_Stock_, init_Cash_):
 def simulation(method, forecast_year_, init_Cash_, i):
     ### Portfolio Simulation ###
     global n_per_year
-    df_IRR = pd.DataFrame(columns=['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'])
-    df_IRR_Sum_ = pd.DataFrame(columns=['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'])
+    df_Simulation = pd.DataFrame(
+        columns=['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'])
+    df_Summary_ = pd.DataFrame(
+        columns=['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'])
     df_LS = {}
     df_DCA = {}
     df_VA = {}
@@ -361,12 +345,11 @@ def simulation(method, forecast_year_, init_Cash_, i):
         df_LS[year] = LS(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
         df_DCA[year] = DCA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
         df_VA[year] = VA(df_Stock.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash_)
-
-        df_IRR = df_IRR.append({}, ignore_index=True)
-        df_IRR.loc[year]['Year'] = year + 1
-        df_IRR.loc[year]['IRR_LS'] = df_LS[year].loc[n_per_year]['IRR']
-        df_IRR.loc[year]['IRR_DCA'] = df_DCA[year].loc[n_per_year]['IRR']
-        df_IRR.loc[year]['IRR_VA'] = df_VA[year].loc[n_per_year]['IRR']
+        df_Simulation = df_Simulation.append({}, ignore_index=True)
+        df_Simulation.loc[year]['Year'] = year + 1
+        df_Simulation.loc[year]['IRR_LS'] = df_LS[year].loc[n_per_year]['IRR']
+        df_Simulation.loc[year]['IRR_DCA'] = df_DCA[year].loc[n_per_year]['IRR']
+        df_Simulation.loc[year]['IRR_VA'] = df_VA[year].loc[n_per_year]['IRR']
 
         if i == 0 and year == 0:
             sheet_name = 'Stock'
@@ -392,9 +375,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
                 'L': float_fmt,
                 'M': float_fmt,
                 'N': float_fmt,
-                'O': float_fmt,
-                'P': float_fmt,
-                'Q': pct_fmt,
+                'O': pct_fmt,
             }
             sheet_name = 'LS'
             df = df_LS[year].copy()
@@ -423,18 +404,18 @@ def simulation(method, forecast_year_, init_Cash_, i):
             for col, width in enumerate(get_col_widths(df, index=False), 1):
                 worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
-    df_IRR = df_IRR.append({}, ignore_index=True)
-    df_IRR.loc[forecast_year_]['Year'] = 'Avg'
-    df_IRR.loc[forecast_year_]['SET_Final'] = df_Stock.iloc[-1]['S']
-    df_IRR.loc[forecast_year_]['RR_Mean'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].mean() * n_per_year)
-    df_IRR.loc[forecast_year_]['RR_Std'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
-    df_IRR.loc[forecast_year_]['RR_Skew'] = df_Stock.iloc[1:]['RR'].skew()
-    df_IRR.loc[forecast_year_]['RR_Kurt'] = df_Stock.iloc[1:]['RR'].kurt()
-    df_IRR.loc[forecast_year_]['IRR_LS'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_IRR.loc[forecast_year_]['IRR_DCA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_IRR.loc[forecast_year_]['IRR_VA'] = '{:.2%}'.format(gmean(1 + (df_IRR.iloc[:-2]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_IRR = df_IRR.fillna('')
-    df_IRR = df_IRR.set_index('Year')
+    df_Simulation = df_Simulation.append({}, ignore_index=True)
+    df_Simulation.loc[forecast_year_]['Year'] = 'Avg'
+    df_Simulation.loc[forecast_year_]['SET_Final'] = df_Stock.iloc[-1]['S']
+    df_Simulation.loc[forecast_year_]['RR_Mean'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation.loc[forecast_year_]['RR_Std'] = '{:.2%}'.format(df_Stock.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation.loc[forecast_year_]['RR_Skew'] = df_Stock.iloc[1:]['RR'].skew()
+    df_Simulation.loc[forecast_year_]['RR_Kurt'] = df_Stock.iloc[1:]['RR'].kurt()
+    df_Simulation.loc[forecast_year_]['IRR_LS'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year_]['IRR_DCA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year_]['IRR_VA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation = df_Simulation.fillna('')
+    df_Simulation = df_Simulation.set_index('Year')
 
     if i == 0:
         body_fmt = {
@@ -448,7 +429,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
             'I': pct_fmt,
         }
         sheet_name = 'Summary'
-        df = df_IRR.copy()
+        df = df_Simulation.copy()
         df.loc['Avg', 'SET_Final'] = df.loc['Avg', 'SET_Final'].astype(float).round(4)
         df.loc['Avg', 'RR_Mean'] = round(float(df.loc['Avg', 'RR_Mean'].rstrip('%')) / 100.0, 4)
         df.loc['Avg', 'RR_Std'] = round(float(df.loc['Avg', 'RR_Std'].rstrip('%')) / 100.0, 4)
@@ -467,18 +448,18 @@ def simulation(method, forecast_year_, init_Cash_, i):
         writer.save()
 
     ### Summary of IRR ###
-    df_IRR_Sum_ = df_IRR_Sum_.append({}, ignore_index=True)
-    df_IRR_Sum_['Iter'] = int(i + 1)
-    df_IRR_Sum_['SET_Final'] = df_IRR.loc['Avg']['SET_Final']
-    df_IRR_Sum_['RR_Mean'] = df_IRR.loc['Avg']['RR_Mean']
-    df_IRR_Sum_['RR_Std'] = df_IRR.loc['Avg']['RR_Std']
-    df_IRR_Sum_['RR_Skew'] = df_IRR.loc['Avg']['RR_Skew']
-    df_IRR_Sum_['RR_Kurt'] = df_IRR.loc['Avg']['RR_Kurt']
-    df_IRR_Sum_['IRR_LS'] = df_IRR.loc['Avg']['IRR_LS']
-    df_IRR_Sum_['IRR_DCA'] = df_IRR.loc['Avg']['IRR_DCA']
-    df_IRR_Sum_['IRR_VA'] = df_IRR.loc['Avg']['IRR_VA']
+    df_Summary_ = df_Summary_.append({}, ignore_index=True)
+    df_Summary_['Iter'] = int(i + 1)
+    df_Summary_['SET_Final'] = df_Simulation.loc['Avg']['SET_Final']
+    df_Summary_['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
+    df_Summary_['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
+    df_Summary_['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
+    df_Summary_['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
+    df_Summary_['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
+    df_Summary_['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
+    df_Summary_['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
 
-    return df_IRR_Sum_.values.tolist()
+    return df_Summary_.values.tolist()
 
 
 def get_col_widths(df, index=True):
@@ -500,25 +481,23 @@ if __name__ == '__main__':
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, method, forecast_year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_IRR_Sum = pd.DataFrame(results, columns=['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'], dtype='object')
-    df_IRR_Sum.sort_values(by='Iter', inplace=True)
+    df_Summary = pd.DataFrame(results, columns=['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA'], dtype='object')
+    df_Summary.sort_values(by='Iter', inplace=True)
 
-    df_IRR_Sum = df_IRR_Sum.append({}, ignore_index=True)
-    df_IRR_Sum.iloc[-1]['Iter'] = 'Avg'
-    df_IRR_Sum.iloc[-1]['SET_Final'] = df_IRR_Sum.iloc[:-1]['SET_Final'].mean()
-    df_IRR_Sum.iloc[-1]['RR_Mean'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR_Sum.iloc[-1]['RR_Std'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR_Sum.iloc[-1]['RR_Skew'] = df_IRR_Sum.iloc[:-1]['RR_Skew'].mean()
-    df_IRR_Sum.iloc[-1]['RR_Kurt'] = df_IRR_Sum.iloc[:-1]['RR_Kurt'].mean()
-    df_IRR_Sum.iloc[-1]['IRR_LS'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR_Sum.iloc[-1]['IRR_DCA'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR_Sum.iloc[-1]['IRR_VA'] = '{:.2%}'.format((df_IRR_Sum.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_IRR_Sum = df_IRR_Sum.fillna('')
-    df_IRR_Sum = df_IRR_Sum.set_index('Iter')
-    df_IRR_Sum.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_IRR_Sum.columns])
-
-    print(df_IRR_Sum)
-
+    df_Summary = df_Summary.append({}, ignore_index=True)
+    df_Summary.iloc[-1]['Iter'] = 'Avg'
+    df_Summary.iloc[-1]['SET_Final'] = df_Summary.iloc[:-1]['SET_Final'].mean()
+    df_Summary.iloc[-1]['RR_Mean'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Std'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
+    df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
+    df_Summary.iloc[-1]['IRR_LS'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_DCA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_VA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary = df_Summary.fillna('')
+    df_Summary = df_Summary.set_index('Iter')
+    df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
+    print(df_Summary)
     if method == 1:
         writer = pd.ExcelWriter('DirectTest_Summary.xlsx')
     elif method == 2:
@@ -530,7 +509,7 @@ if __name__ == '__main__':
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
 
     sheet_name = 'Summary'
-    df = df_IRR_Sum.copy()
+    df = df_Summary.copy()
     df['RR', 'Mean'] = df['RR', 'Mean'].str.rstrip('%').astype('float') / 100.0
     df['RR', 'Std'] = df['RR', 'Std'].str.rstrip('%').astype('float') / 100.0
     df['IRR', 'LS'] = df['IRR', 'LS'].str.rstrip('%').astype('float') / 100.0
@@ -548,6 +527,9 @@ if __name__ == '__main__':
         'G': pct_fmt,
         'H': pct_fmt,
         'I': pct_fmt,
+        'J': pct_fmt,
+        'K': pct_fmt,
+        'L': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
         worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
