@@ -16,16 +16,17 @@ style.use('ggplot')
 n_per_year = 12
 
 ### Simulation Config ###
-method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+method = 2  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
 iter = 10000
-forecast_year = 10
+forecast_year = 5
 
 
 def direct(forecast_year_):
     global n_per_year
     df = pd.DataFrame(columns=['Month', 'RR', 'S'])
 
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    df_SET = pd.read_excel('data\SET.xlsx', sheet_name='Sheet1')
+    df_SET = df_SET.iloc[(120 - forecast_year_ * n_per_year):]
     RR = df_SET.iloc[1:]['RR'].values
     SETi = df_SET.iloc[1:]['SETi'].values
     init_S = df_SET.iloc[0]['SETi']
@@ -43,7 +44,6 @@ def direct(forecast_year_):
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
     df = df.set_index('Month')
-
     return df
 
 
@@ -52,10 +52,11 @@ def monte_carlo(forecast_year_):
     df = pd.DataFrame(columns=['Month', 'u.dt', 'S(u.dt)', 'N', 'N.sigma.sqrt(dt)', 'S(N.sigma.sqrt(dt))', 'dS', 'S', 'RR'])
 
     ### Monte Carlo Config ###
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
-    init_S = df_SET.iloc[0]['SETi']  # 449.96
-    u = df_SET.iloc[1:]['RR'].mean() * n_per_year  # 0.1376
-    sigma = df_SET.iloc[1:]['RR'].std() * np.sqrt(n_per_year)  # 0.1580
+    df_SET = pd.read_excel('data\SET.xlsx', sheet_name='Sheet1')
+    df_SET = df_SET.iloc[(120 - forecast_year_ * n_per_year):]
+    init_S = df_SET.iloc[0]['SETi']
+    u = df_SET.iloc[1:]['RR'].mean() * n_per_year
+    sigma = df_SET.iloc[1:]['RR'].std() * np.sqrt(n_per_year)
     dt = 1 / n_per_year
 
     for t in range(0, (forecast_year_ * n_per_year) + 1):
@@ -85,7 +86,8 @@ def bootstrap(forecast_year_):
     global n_per_year
     df = pd.DataFrame(columns=['Month', 'RR', 'dS', 'S'])
 
-    df_SET = pd.read_excel('SET.xlsx', sheet_name='Sheet1')
+    df_SET = pd.read_excel('data\SET.xlsx', sheet_name='Sheet1')
+    df_SET = df_SET.iloc[(120 - forecast_year_ * n_per_year):]
     RR = df_SET.iloc[1:]['RR'].values
     RR = resample(RR, replace=True, n_samples=forecast_year_ * n_per_year, random_state=None)
     init_S = df_SET.iloc[0]['SETi']
@@ -305,7 +307,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
 
     if method == 1:
         df_Stock = direct(forecast_year_)
-        writer = pd.ExcelWriter('DirectTest_Simulation.xlsx')
+        writer = pd.ExcelWriter('output\DirectTest_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -315,7 +317,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
         }
     elif method == 2:
         df_Stock = monte_carlo(forecast_year_)
-        writer = pd.ExcelWriter('MonteCarlo_Simulation.xlsx')
+        writer = pd.ExcelWriter('output\MonteCarlo_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -331,7 +333,7 @@ def simulation(method, forecast_year_, init_Cash_, i):
         }
     elif method == 3:
         df_Stock = bootstrap(forecast_year_)
-        writer = pd.ExcelWriter('Bootstrap_Simulation.xlsx')
+        writer = pd.ExcelWriter('output\Bootstrap_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -499,11 +501,11 @@ if __name__ == '__main__':
     df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
     print(df_Summary)
     if method == 1:
-        writer = pd.ExcelWriter('DirectTest_Summary.xlsx')
+        writer = pd.ExcelWriter('output\DirectTest_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 2:
-        writer = pd.ExcelWriter('MonteCarlo_Summary.xlsx')
+        writer = pd.ExcelWriter('output\MonteCarlo_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 3:
-        writer = pd.ExcelWriter('Bootstrap_Summary.xlsx')
+        writer = pd.ExcelWriter('output\Bootstrap_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
