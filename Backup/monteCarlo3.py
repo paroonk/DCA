@@ -98,7 +98,6 @@ for i in range(iter):
                 LS[i, year].loc[t]['Change in Inv.Asset Value'] = LS[i, year].loc[t]['Buy/Sell Inv.Asset Volume'] * LS[i, year].loc[t]['Inv.Asset Price']
                 LS[i, year].loc[t]['Net Inv.Asset Value'] = LS[i, year].loc[t]['Net Inv.Asset Volume'] * LS[i, year].loc[t]['Inv.Asset Price']
                 LS[i, year].loc[t]['Beg. Cash'] = LS[i, year].loc[t - 1]['Net Cash']
-                # todo interest not included yet
                 LS[i, year].loc[t]['Change in Cash'] = -LS[i, year].loc[t]['Change in Inv.Asset Value'] if \
                     LS[i, year].loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
                 LS[i, year].loc[t]['Net Cash'] = LS[i, year].loc[t]['Beg. Cash'] + LS[i, year].loc[t]['Change in Cash']
@@ -153,7 +152,7 @@ for i in range(iter):
                 DCA[i, year].loc[t]['Change in Inv.Asset Value'] = DCA[i, year].loc[t]['Buy/Sell Inv.Asset Volume'] * DCA[i, year].loc[t]['Inv.Asset Price']
                 DCA[i, year].loc[t]['Net Inv.Asset Value'] = DCA[i, year].loc[t]['Net Inv.Asset Volume'] * DCA[i, year].loc[t]['Inv.Asset Price']
                 DCA[i, year].loc[t]['Beg. Cash'] = DCA[i, year].loc[t - 1]['Net Cash']
-                # todo interest not included yet
+
                 DCA[i, year].loc[t]['Change in Cash'] = -DCA[i, year].loc[t]['Change in Inv.Asset Value'] if \
                     DCA[i, year].loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
                 DCA[i, year].loc[t]['Net Cash'] = DCA[i, year].loc[t]['Beg. Cash'] + DCA[i, year].loc[t]['Change in Cash']

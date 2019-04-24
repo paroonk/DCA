@@ -76,7 +76,6 @@ for i in range(iter):
             LS[i].loc[t]['Net Inv.Asset Value'] = LS[i].loc[t]['Net Inv.Asset Volume'] * LS[i].loc[t]['Inv.Asset Price']
             LS[i].loc[t]['Deposit'] = init_Cash if divmod(t, 12)[1] == 0.0 else 0.0
             LS[i].loc[t]['Beg. Cash'] = 0.0 + LS[i].loc[t]['Deposit']
-            # todo interest not included yet
             LS[i].loc[t]['Change in Cash'] = -LS[i].loc[t]['Change in Value of Inv.Asset'] if LS[i].loc[t]['Change in Value of Inv.Asset'] != 0.0 else 0.0
             LS[i].loc[t]['Net Cash'] = LS[i].loc[t]['Beg. Cash'] + LS[i].loc[t]['Change in Cash']
             LS[i].loc[t]['Total Wealth'] = LS[i].loc[t]['Net Inv.Asset Value'] + LS[i].loc[t]['Net Cash']
@@ -123,7 +122,6 @@ for i in range(iter):
             DCA[i].loc[t]['Net Inv.Asset Value'] = DCA[i].loc[t]['Net Inv.Asset Volume'] * DCA[i].loc[t]['Inv.Asset Price']
             DCA[i].loc[t]['Deposit'] = init_Cash if divmod(t, 12)[1] == 0.0 else 0.0
             DCA[i].loc[t]['Beg. Cash'] = 0.0 + DCA[i].loc[t]['Deposit']
-            # todo interest not included yet
             DCA[i].loc[t]['Change in Cash'] = -DCA[i].loc[t]['Change in Value of Inv.Asset'] if DCA[i].loc[t]['Change in Value of Inv.Asset'] != 0.0 else 0.0
             DCA[i].loc[t]['Net Cash'] = DCA[i].loc[t]['Beg. Cash'] + DCA[i].loc[t]['Change in Cash']
             DCA[i].loc[t]['Total Wealth'] = DCA[i].loc[t]['Net Inv.Asset Value'] + DCA[i].loc[t]['Net Cash']
