@@ -469,7 +469,7 @@ def get_col_widths(df, index=True):
 if __name__ == '__main__':
 
     ### Price Dataframe ###
-    df_SET = pd.read_excel('data/SET.xlsx', sheet_name='Sheet1')
+    df_SET = pd.read_excel('data/SET_TR.xlsx', sheet_name='Sheet1')
     df_SET = df_SET.iloc[(len(df_SET.index) - (forecast_year * n_per_year) - 1):]
 
     results = []
