@@ -21,8 +21,8 @@ col_Simulation = ['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt'
 col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 ### Simulation Config ###
-method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
-iter = 10
+method = 1  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+iter = 100
 forecast_year = 10
 init_Cash = 120000.0
 
