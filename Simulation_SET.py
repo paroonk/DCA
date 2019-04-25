@@ -9,6 +9,16 @@ from matplotlib import style
 from scipy.stats.mstats import gmean
 from sklearn.utils import resample
 
+
+def get_col_widths(df, index=True):
+    if index:
+        idx_max = max([len(str(s)) for s in df.index.values] + [len(str(df.index.name))])
+        col_widths = [idx_max] + [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
+    else:
+        col_widths = [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
+    return col_widths
+
+
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
 pd.options.display.float_format = '{:.2f}'.format
@@ -21,8 +31,8 @@ col_Simulation = ['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt'
 col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 ### Simulation Config ###
-method = 1  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
-iter = 100
+method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+iter = 10000
 forecast_year = 10
 init_Cash = 120000.0
 
@@ -293,7 +303,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
     global col_Simulation
     global col_Summary
     df_Simulation = pd.DataFrame(columns=col_Simulation)
-    df_Summary_ = pd.DataFrame(columns=col_Summary)
+    df_Summary = pd.DataFrame(columns=col_Summary)
     df_LS = {}
     df_DCA = {}
     df_VA = {}
@@ -443,27 +453,18 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
         writer.save()
 
     ### Summary of IRR ###
-    df_Summary_ = df_Summary_.append({}, ignore_index=True)
-    df_Summary_['Iter'] = int(i + 1)
-    df_Summary_['SET_Final'] = df_Simulation.loc['Avg']['SET_Final']
-    df_Summary_['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
-    df_Summary_['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
-    df_Summary_['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
-    df_Summary_['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
-    df_Summary_['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
-    df_Summary_['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
-    df_Summary_['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
+    df_Summary = df_Summary.append({}, ignore_index=True)
+    df_Summary['Iter'] = int(i + 1)
+    df_Summary['SET_Final'] = df_Simulation.loc['Avg']['SET_Final']
+    df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
+    df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
+    df_Summary['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
+    df_Summary['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
+    df_Summary['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
+    df_Summary['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
+    df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
 
-    return df_Summary_.values.tolist()
-
-
-def get_col_widths(df, index=True):
-    if index:
-        idx_max = max([len(str(s)) for s in df.index.values] + [len(str(df.index.name))])
-        col_widths = [idx_max] + [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
-    else:
-        col_widths = [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
-    return col_widths
+    return df_Summary.values.tolist()
 
 
 if __name__ == '__main__':
