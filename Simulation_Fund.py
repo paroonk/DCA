@@ -17,8 +17,8 @@ n_per_year = 12
 col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume', 'Net Inv.Asset Volume',
                    'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Change in Inv.Asset Value', 'Net Inv.Asset Value',
                    'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Profit/Loss', 'IRR']
-col_Simulation = ['Year', 'Fund_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'Fund_Code', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Simulation = ['Year', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Summary = ['Iter', 'Fund_Code', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 ### Simulation Config ###
 forecast_year = 10
@@ -279,7 +279,7 @@ if __name__ == '__main__':
 
     df_Simulation = df_Simulation.append({}, ignore_index=True)
     df_Simulation.loc[forecast_year]['Year'] = 'Avg'
-    df_Simulation.loc[forecast_year]['Fund_Last'] = df_Price.iloc[-1]['S']
+    df_Simulation.loc[forecast_year]['NAV_Last'] = df_Price.iloc[-1]['S']
     df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
     df_Simulation.loc[forecast_year]['RR_Std'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
     df_Simulation.loc[forecast_year]['RR_Skew'] = df_Price.iloc[1:]['RR'].skew()
