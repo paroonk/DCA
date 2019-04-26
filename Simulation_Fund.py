@@ -7,7 +7,6 @@ import tqdm
 import xlsxwriter.utility
 from matplotlib import style
 from scipy.stats.mstats import gmean
-from sklearn.utils import resample
 
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
@@ -20,7 +19,7 @@ col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume'
 col_Simulation = ['Year', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 col_Summary = ['Iter', 'Fund_Code', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
-### Simulation Config ###
+# Simulation Config #
 forecast_year = 10
 init_Cash = 120000.0
 
@@ -212,58 +211,16 @@ def VA(df_Price_Y, init_Cash):
     return df
 
 
-def simulation(df, i):
+def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
     global col_Summary
     df_Simulation = pd.DataFrame(columns=col_Simulation)
     df_Summary = pd.DataFrame(columns=col_Summary)
-
-    ### Summary of IRR ###
-    df_Summary = df_Summary.append({}, ignore_index=True)
-    df_Summary['Iter'] = int(i + 1)
-
-    return df_Summary.values.tolist()
-
-if __name__ == '__main__':
-
-    ## Excel to Pickle ###
-    # df_FundData = pd.read_excel('data/Fund.xlsx', sheet_name='Data').set_index('SecId')
-    # df_FundData.to_pickle('data/FundData.pkl')
-    # df_FundNAV = pd.read_excel('data/Fund.xlsx', sheet_name='NAV').set_index('Date').replace(' ', np.nan)
-    # df_FundNAV.to_pickle('data/FundNAV.pkl')
-    # df_FundDiv = pd.read_excel('data/Fund.xlsx', sheet_name='Div').set_index('Date').replace(' ', np.nan)
-    # df_FundDiv.to_pickle('data/FundDiv.pkl')
-
-    ### Import Pickle ###
-    df_FundData = pd.read_pickle('data/FundData.pkl')
-    df_FundNAV = pd.read_pickle('data/FundNAV.pkl')
-    df_FundDiv = pd.read_pickle('data/FundDiv.pkl')
-
-    ### Filter Only 10Y Fund ###
-    df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
-    df_FundDiv = df_FundDiv.loc[:, df_FundNAV.columns]
-    df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
-    df_FundDiv = df_FundDiv.iloc[:forecast_year * n_per_year + 1].sort_index()
-
-    # results = []
-    # pool = Pool()
-    # iter = df_FundNAV.shape[1]
-    # for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, df_FundNAV), range(iter)), total=iter):
-    #     results.extend(result)
-
-    df_Simulation = pd.DataFrame(columns=col_Simulation)
     df_LS = {}
     df_DCA = {}
     df_VA = {}
 
-    # iter = 9
-    # results = simulation(df_FundNAV, iter)
-    # df_Summary = pd.DataFrame(results, columns=col_Summary, dtype='object')
-    # df_Summary.sort_values(by='Iter', inplace=True)
-    # print(df_Summary)
-
-    iter = 9
     df_Price = pd.DataFrame(df_FundNAV.iloc[:, iter])
     df_Price.columns = ['S']
     df_Price['RR'] = df_Price.pct_change()
@@ -289,4 +246,63 @@ if __name__ == '__main__':
     df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_Simulation = df_Simulation.fillna('')
     df_Simulation = df_Simulation.set_index('Year')
-    print(df_Simulation)
+
+    # Summary of IRR #
+    df_Summary = df_Summary.append({}, ignore_index=True)
+    df_Summary['Iter'] = int(iter + 1)
+    df_Summary['Fund_Code'] = df_FundData.loc[df_FundNAV.columns[iter], 'Fund Code']
+    df_Summary['NAV_Last'] = df_Simulation.loc['Avg']['NAV_Last']
+    df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
+    df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
+    df_Summary['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
+    df_Summary['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
+    df_Summary['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
+    df_Summary['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
+    df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
+
+    return df_Summary.values.tolist()
+
+if __name__ == '__main__':
+
+    # Excel to Pickle #
+    # df_FundNAV = pd.read_excel('data/Fund.xlsx', sheet_name='NAV').set_index('Date').replace(' ', np.nan)
+    # df_FundNAV.to_pickle('data/FundNAV.pkl')
+    # df_FundDiv = pd.read_excel('data/Fund.xlsx', sheet_name='Div').set_index('Date').replace(' ', np.nan)
+    # df_FundDiv.to_pickle('data/FundDiv.pkl')
+    # df_FundData = pd.read_excel('data/Fund.xlsx', sheet_name='Data').set_index('SecId')
+    # df_FundData.to_pickle('data/FundData.pkl')
+
+    # Import Pickle #
+    df_FundNAV = pd.read_pickle('data/FundNAV.pkl')
+    df_FundDiv = pd.read_pickle('data/FundDiv.pkl')
+    df_FundData = pd.read_pickle('data/FundData.pkl')
+
+    # Filter Only 10Y Fund #
+    df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
+    df_FundNAV = df_FundNAV.iloc[:, :10]
+    df_FundDiv = df_FundDiv.loc[:, df_FundNAV.columns]
+    df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
+    df_FundDiv = df_FundDiv.iloc[:forecast_year * n_per_year + 1].sort_index()
+
+    results = []
+    pool = Pool()
+    iter = df_FundNAV.shape[1]
+    for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash), range(iter)), total=iter):
+        results.extend(result)
+
+    df_Summary = pd.DataFrame(results, columns=col_Summary, dtype='object')
+    df_Summary.sort_values(by='Iter', inplace=True)
+    df_Summary = df_Summary.append({}, ignore_index=True)
+    df_Summary.iloc[-1]['Iter'] = 'Avg'
+    df_Summary.iloc[-1]['NAV_Last'] = df_Summary.iloc[:-1]['NAV_Last'].mean()
+    df_Summary.iloc[-1]['RR_Mean'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Std'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
+    df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
+    df_Summary.iloc[-1]['IRR_LS'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_DCA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_VA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary = df_Summary.fillna('')
+    df_Summary = df_Summary.set_index('Iter')
+    df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
+    print(df_Summary)

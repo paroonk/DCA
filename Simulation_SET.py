@@ -30,7 +30,7 @@ col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume'
 col_Simulation = ['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
-### Simulation Config ###
+# Simulation Config #
 method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
 iter = 10000
 forecast_year = 10
@@ -297,8 +297,7 @@ def VA(df_Price_Y, init_Cash):
     return df
 
 
-def simulation(method, df_SET, forecast_year, init_Cash, i):
-    ### Portfolio Simulation ###
+def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
     global col_Summary
@@ -356,7 +355,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
         df_Simulation.loc[year]['IRR_DCA'] = df_DCA[year].loc[n_per_year]['IRR']
         df_Simulation.loc[year]['IRR_VA'] = df_VA[year].loc[n_per_year]['IRR']
 
-        if i == 0 and year == 0:
+        if iter == 0 and year == 0:
             sheet_name = 'Stock'
             df = df_Price.copy()
             df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
@@ -422,7 +421,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
     df_Simulation = df_Simulation.fillna('')
     df_Simulation = df_Simulation.set_index('Year')
 
-    if i == 0:
+    if iter == 0:
         body_fmt = {
             'B': float_fmt,
             'C': pct_fmt,
@@ -452,9 +451,9 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
             worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
         writer.save()
 
-    ### Summary of IRR ###
+    # Summary of IRR #
     df_Summary = df_Summary.append({}, ignore_index=True)
-    df_Summary['Iter'] = int(i + 1)
+    df_Summary['Iter'] = int(iter + 1)
     df_Summary['SET_Final'] = df_Simulation.loc['Avg']['SET_Final']
     df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
     df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
@@ -469,7 +468,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, i):
 
 if __name__ == '__main__':
 
-    ### Price Dataframe ###
+    # Price Dataframe #
     df_SET = pd.read_excel('data/SET_TR.xlsx', sheet_name='Sheet1')
     df_SET = df_SET.iloc[(len(df_SET.index) - (forecast_year * n_per_year) - 1):]
 
