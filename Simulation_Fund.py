@@ -297,7 +297,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Price.columns = ['S']
     df_Price['RR'] = df_Price.pct_change()
     df_Price.reset_index(drop=True, inplace=True)
-    df_Price.index = ['Month']
+    df_Price.index.name = 'Month'
     df_Div = pd.DataFrame(df_FundDiv.iloc[:, iter])
     df_Div.columns = ['Div']
     df_Data = pd.DataFrame(df_FundData.iloc[iter, :])
@@ -327,7 +327,6 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
         if df_Data.loc['Fund Code'].iloc[0] == '1S-LTF' and year == 0:
             sheet_name = 'Stock'
             df = df_Price.copy()
-            print(df)
             df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
             df.loc[1:] = df.loc[1:].astype(float).round(4)
             df.to_excel(writer, sheet_name=sheet_name)
@@ -456,8 +455,6 @@ if __name__ == '__main__':
 
     # Filter Only 10Y Fund #
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
-    # todo test
-    df_FundNAV = df_FundNAV.iloc[:, 7:8]
     df_FundDiv = df_FundDiv.loc[:, df_FundNAV.columns].fillna(0)
     df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
     df_FundDiv = df_FundDiv.iloc[:forecast_year * n_per_year + 1].sort_index()
