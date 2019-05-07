@@ -17,7 +17,7 @@ col_Transaction = ['Month', 'Beg. Fund Volume', 'Buy/Sell Fund Volume', 'Net Fun
                    'Fund NAV', 'Fund Bid Price', 'Fund Offer Price', 'Capital Gain', 'Beg. Fund Value', 'Change in Fund Value', 'Net Fund Value',
                    'Beg. Cash', 'Change in Cash', 'Dividend Gain', 'Net Cash', 'Total Wealth', 'Profit/Loss', 'IRR']
 col_Simulation = ['Year', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'Fund_Code', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_GlobalBroad', 'Category_Morningstar', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
 forecast_year = 10
@@ -107,7 +107,7 @@ def LS(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -189,7 +189,7 @@ def DCA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -275,7 +275,7 @@ def VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -383,13 +383,13 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Simulation = df_Simulation.append({}, ignore_index=True)
     df_Simulation.loc[forecast_year]['Year'] = 'Avg'
     df_Simulation.loc[forecast_year]['NAV_Last'] = df_Price.iloc[-1]['S']
-    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
-    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
     df_Simulation.loc[forecast_year]['RR_Skew'] = df_Price.iloc[1:]['RR'].skew()
     df_Simulation.loc[forecast_year]['RR_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
-    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_Simulation = df_Simulation.fillna('')
     df_Simulation = df_Simulation.set_index('Year')
 
@@ -427,6 +427,9 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary['Iter'] = int(iter + 1)
     df_Summary['Fund_Code'] = df_FundData.loc[df_FundNAV.columns[iter], 'Fund Code']
+    df_Summary['Fund_Name'] = df_FundData.loc[df_FundNAV.columns[iter], 'Local Name - Thai']
+    df_Summary['Category_GlobalBroad'] = df_FundData.loc[df_FundNAV.columns[iter], 'Global Broad Category Group']
+    df_Summary['Category_Morningstar'] = df_FundData.loc[df_FundNAV.columns[iter], 'Morningstar Category']
     df_Summary['NAV_Last'] = df_Simulation.loc['Avg']['NAV_Last']
     df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
     df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
@@ -437,6 +440,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
 
     return df_Summary.values.tolist()
+
 
 if __name__ == '__main__':
 
@@ -455,6 +459,7 @@ if __name__ == '__main__':
 
     # Filter Only 10Y Fund #
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
+    # df_FundNAV = df_FundNAV.iloc[:, 0:10]
     df_FundDiv = df_FundDiv.loc[:, df_FundNAV.columns].fillna(0)
     df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
     df_FundDiv = df_FundDiv.iloc[:forecast_year * n_per_year + 1].sort_index()
@@ -471,23 +476,23 @@ if __name__ == '__main__':
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary.iloc[-1]['Iter'] = 'Avg'
     df_Summary.iloc[-1]['NAV_Last'] = df_Summary.iloc[:-1]['NAV_Last'].mean()
-    df_Summary.iloc[-1]['RR_Mean'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Std'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
     df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
-    df_Summary.iloc[-1]['IRR_LS'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['IRR_DCA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['IRR_VA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_LS'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_DCA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_VA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary = df_Summary.fillna('')
     df_Summary = df_Summary.set_index('Iter')
     df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
-    print(df_Summary)
+    print(df_Summary.drop(columns=['Name'], level=1))
 
     writer = pd.ExcelWriter('output/Fund_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
-    text_fmt = workbook.add_format({'align': 'right'})
+    text_fmt = workbook.add_format({'align': 'left'})
 
     sheet_name = 'Summary'
     df = df_Summary.copy()
@@ -501,14 +506,17 @@ if __name__ == '__main__':
     worksheet = writer.sheets[sheet_name]
     body_fmt = {
         'B': text_fmt,
-        'C': float_fmt,
-        'D': pct_fmt,
-        'E': pct_fmt,
+        'C': text_fmt,
+        'D': text_fmt,
+        'E': text_fmt,
         'F': float_fmt,
-        'G': float_fmt,
+        'G': pct_fmt,
         'H': pct_fmt,
-        'I': pct_fmt,
-        'J': pct_fmt,
+        'I': float_fmt,
+        'J': float_fmt,
+        'K': pct_fmt,
+        'L': pct_fmt,
+        'M': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
         worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
