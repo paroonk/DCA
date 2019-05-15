@@ -279,7 +279,9 @@ if __name__ == '__main__':
 
     # Filter Only 10Y Fund #
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
-    df_FundNAV = df_FundNAV.iloc[:, :10]
+    df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
+    # todo test only 10 funds
+    # df_FundNAV = df_FundNAV.iloc[:, :10]
     df_FundDiv = df_FundDiv.loc[:, df_FundNAV.columns]
     df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
     df_FundDiv = df_FundDiv.iloc[:forecast_year * n_per_year + 1].sort_index()
