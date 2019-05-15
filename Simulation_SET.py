@@ -32,7 +32,7 @@ col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', '
 
 # Simulation Config #
 method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
-iter = 10000
+iter = 2
 forecast_year = 10
 init_Cash = 120000.0
 
@@ -133,7 +133,7 @@ def LS(df_Price_Y, init_Cash):
             df.loc[t]['Beg. Inv.Asset Value'] = df.loc[t]['Beg. Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Capital Gain'] = 0.0
             df.loc[t]['Beg. Cash'] = init_Cash
-            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / df_Price_Y.loc[t]
+            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Inv.Asset Value'] = df.loc[t]['Buy/Sell Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Cash'] = -df.loc[t]['Change in Inv.Asset Value'] if df.loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
@@ -169,7 +169,7 @@ def LS(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -191,7 +191,7 @@ def DCA(df_Price_Y, init_Cash):
             df.loc[t]['Beg. Inv.Asset Value'] = df.loc[t]['Beg. Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Capital Gain'] = 0.0
             df.loc[t]['Beg. Cash'] = init_Cash
-            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / n_per_year / df_Price_Y.loc[t]
+            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / n_per_year / df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Inv.Asset Value'] = df.loc[t]['Buy/Sell Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Cash'] = -df.loc[t]['Change in Inv.Asset Value'] if df.loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
@@ -205,7 +205,7 @@ def DCA(df_Price_Y, init_Cash):
             df.loc[t]['Beg. Inv.Asset Value'] = df.loc[t]['Beg. Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Capital Gain'] = df.loc[t]['Beg. Inv.Asset Value'] - df.loc[t - 1]['Net Inv.Asset Value']
             df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
-            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / n_per_year / df_Price_Y.loc[t]
+            df.loc[t]['Buy/Sell Inv.Asset Volume'] = init_Cash / n_per_year / df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Inv.Asset Value'] = df.loc[t]['Buy/Sell Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Cash'] = -df.loc[t]['Change in Inv.Asset Value'] if df.loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
@@ -227,7 +227,7 @@ def DCA(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -251,7 +251,7 @@ def VA(df_Price_Y, init_Cash):
             df.loc[t]['Beg. Cash'] = init_Cash
             diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Inv.Asset Value']
             diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
-            df.loc[t]['Buy/Sell Inv.Asset Volume'] = diff / df_Price_Y.loc[t]
+            df.loc[t]['Buy/Sell Inv.Asset Volume'] = diff / df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Inv.Asset Value'] = df.loc[t]['Buy/Sell Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Cash'] = -df.loc[t]['Change in Inv.Asset Value'] if df.loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
@@ -267,7 +267,7 @@ def VA(df_Price_Y, init_Cash):
             df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
             diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Inv.Asset Value']
             diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
-            df.loc[t]['Buy/Sell Inv.Asset Volume'] = diff / df_Price_Y.loc[t]
+            df.loc[t]['Buy/Sell Inv.Asset Volume'] = diff / df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Inv.Asset Value'] = df.loc[t]['Buy/Sell Inv.Asset Volume'] * df.loc[t]['Inv.Asset Price']
             df.loc[t]['Change in Cash'] = -df.loc[t]['Change in Inv.Asset Value'] if df.loc[t]['Change in Inv.Asset Value'] != 0.0 else 0.0
             df.loc[t]['Net Inv.Asset Volume'] = df.loc[t]['Beg. Inv.Asset Volume'] + df.loc[t]['Buy/Sell Inv.Asset Volume']
@@ -289,7 +289,7 @@ def VA(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Profit/Loss'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['IRR'] = '{:.2%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
+            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
     df['Month'] = df['Month'].astype('int')
@@ -309,7 +309,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
 
     if method == 1:
         df_Price = direct(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/DirectTest_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DirectTest{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -319,7 +319,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 2:
         df_Price = monte_carlo(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/MonteCarlo_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MonteCarlo{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -335,7 +335,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 3:
         df_Price = bootstrap(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/Bootstrap_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/Bootstrap{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -346,9 +346,10 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
 
     for year in range(forecast_year):
-        df_LS[year] = LS(df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash)
-        df_DCA[year] = DCA(df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash)
-        df_VA[year] = VA(df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True), init_Cash)
+        df_Price_Y = df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True)
+        df_LS[year] = LS(df_Price_Y, init_Cash)
+        df_DCA[year] = DCA(df_Price_Y, init_Cash)
+        df_VA[year] = VA(df_Price_Y, init_Cash)
         df_Simulation = df_Simulation.append({}, ignore_index=True)
         df_Simulation.loc[year]['Year'] = year + 1
         df_Simulation.loc[year]['IRR_LS'] = df_LS[year].loc[n_per_year]['IRR']
@@ -411,13 +412,13 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
     df_Simulation = df_Simulation.append({}, ignore_index=True)
     df_Simulation.loc[forecast_year]['Year'] = 'Avg'
     df_Simulation.loc[forecast_year]['SET_Final'] = df_Price.iloc[-1]['S']
-    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
-    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.2%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
     df_Simulation.loc[forecast_year]['RR_Skew'] = df_Price.iloc[1:]['RR'].skew()
     df_Simulation.loc[forecast_year]['RR_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
-    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.2%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_Simulation = df_Simulation.fillna('')
     df_Simulation = df_Simulation.set_index('Year')
 
@@ -484,23 +485,24 @@ if __name__ == '__main__':
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary.iloc[-1]['Iter'] = 'Avg'
     df_Summary.iloc[-1]['SET_Final'] = df_Summary.iloc[:-1]['SET_Final'].mean()
-    df_Summary.iloc[-1]['RR_Mean'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Std'] = '{:.2%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
     df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
-    df_Summary.iloc[-1]['IRR_LS'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['IRR_DCA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['IRR_VA'] = '{:.2%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_LS'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_DCA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['IRR_VA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary = df_Summary.fillna('')
     df_Summary = df_Summary.set_index('Iter')
     df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
     print(df_Summary)
+
     if method == 1:
-        writer = pd.ExcelWriter('output/DirectTest_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DirectTest{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 2:
-        writer = pd.ExcelWriter('output/MonteCarlo_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MonteCarlo{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 3:
-        writer = pd.ExcelWriter('output/Bootstrap_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/Bootstrap{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -524,9 +526,6 @@ if __name__ == '__main__':
         'G': pct_fmt,
         'H': pct_fmt,
         'I': pct_fmt,
-        'J': pct_fmt,
-        'K': pct_fmt,
-        'L': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
         worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
