@@ -309,7 +309,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
 
     if method == 1:
         df_Price = direct(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/DirectTest_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DirectTest{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -319,7 +319,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 2:
         df_Price = monte_carlo(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/MonteCarlo_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MonteCarlo{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -335,7 +335,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 3:
         df_Price = bootstrap(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/Bootstrap_Simulation_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/Bootstrap{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -498,11 +498,11 @@ if __name__ == '__main__':
     print(df_Summary)
 
     if method == 1:
-        writer = pd.ExcelWriter('output/DirectTest_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DirectTest{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 2:
-        writer = pd.ExcelWriter('output/MonteCarlo_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MonteCarlo{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 3:
-        writer = pd.ExcelWriter('output/Bootstrap_Summary_{}.xlsx'.format(pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/Bootstrap{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
