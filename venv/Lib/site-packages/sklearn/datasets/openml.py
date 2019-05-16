@@ -6,25 +6,17 @@ from os.path import join
 from warnings import warn
 from contextlib import closing
 from functools import wraps
-import warnings
 import itertools
-import inspect
+from collections.abc import Generator
 
-try:
-    # Python 3+
-    from urllib.request import urlopen, Request
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen, Request
-
+from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
 
-from sklearn.externals import _arff
+from ..externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2, BytesIO
-from ..externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from ..utils import Bunch
 
 __all__ = ['fetch_openml']
@@ -56,9 +48,7 @@ def _retry_with_clean_cache(openml_path, data_home):
             except HTTPError:
                 raise
             except Exception:
-                warnings.warn(
-                    "Invalid cache, redownloading file",
-                    RuntimeWarning)
+                warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
                     os.unlink(local_path)
@@ -95,8 +85,6 @@ def _open_openml_url(openml_path, data_home):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
-            if PY2:
-                fsrc = BytesIO(fsrc.read())
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -249,7 +237,7 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     X : np.array or scipy.sparse.csr_matrix
     y : np.array
     """
-    if inspect.isgenerator(arff_data):
+    if isinstance(arff_data, Generator):
         if shape[0] == -1:
             count = -1
         else:
@@ -397,16 +385,9 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             else:
                 return_type = _arff.DENSE_GEN
 
-            if PY2:
-                arff_file = _arff.load(
-                    response.read(),
-                    encode_nominal=encode_nominal,
-                    return_type=return_type,
-                )
-            else:
-                arff_file = _arff.loads(response.read().decode('utf-8'),
-                                        encode_nominal=encode_nominal,
-                                        return_type=return_type)
+            arff_file = _arff.loads(response.read().decode('utf-8'),
+                                    encode_nominal=encode_nominal,
+                                    return_type=return_type)
         return arff_file
 
     return _arff_load()
@@ -468,9 +449,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     .. note:: EXPERIMENTAL
 
-        The API is experimental in version 0.20 (particularly the return value
-        structure), and might have small backward-incompatible changes in
-        future releases.
+        The API is experimental (particularly the return value structure),
+        and might have small backward-incompatible changes in future releases.
 
     Parameters
     ----------
@@ -534,10 +514,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
         .. note:: EXPERIMENTAL
 
-            This interface is **experimental** as at version 0.20 and
-            subsequent releases may change attributes without notice
-            (although there should only be minor changes to ``data``
-            and ``target``).
+            This interface is **experimental** and subsequent releases may
+            change attributes without notice (although there should only be
+            minor changes to ``data`` and ``target``).
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
@@ -604,14 +583,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
                          if feature['is_target'] == 'true']
-    elif isinstance(target_column, string_types):
+    elif isinstance(target_column, str):
         # for code-simplicity, make target_column by default a list
         target_column = [target_column]
     elif target_column is None:
         target_column = []
     elif not isinstance(target_column, list):
         raise TypeError("Did not recognize type of target_column"
-                        "Should be six.string_type, list or None. Got: "
+                        "Should be str, list or None. Got: "
                         "{}".format(type(target_column)))
     data_columns = _valid_data_column_names(features_list,
                                             target_column)
@@ -671,13 +650,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     elif all(is_classification):
         y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
                                           dtype='O'),
-                               y[:, i:i+1].astype(int))
+                               y[:, i:i+1].astype(int, copy=False))
                        for i, col_name in enumerate(target_column)])
     elif any(is_classification):
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = u"{}\n\nDownloaded from openml.org.".format(
+    description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     # reshape y back to 1-D array, if there is only 1 target column; back
