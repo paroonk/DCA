@@ -26,9 +26,9 @@ style.use('ggplot')
 n_per_year = 12
 col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume', 'Net Inv.Asset Volume',
                    'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Buy/Sell Inv.Asset Value', 'Net Inv.Asset Value',
-                   'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Net Profit', 'IRR']
-col_Simulation = ['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+                   'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Net Profit', 'RR', 'IRR']
+col_Simulation = ['Year', 'SET_Final', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Summary = ['Iter', 'SET_Final', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
 method = 1  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
@@ -169,6 +169,7 @@ def LS(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -227,6 +228,7 @@ def DCA(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -289,6 +291,7 @@ def VA(df_Price_Y, init_Cash):
             df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash']
             df.loc[t]['Total Wealth'] = df.loc[t]['Net Inv.Asset Value'] + df.loc[t]['Net Cash']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -301,15 +304,17 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
     global col_Summary
-    df_Simulation = pd.DataFrame(columns=col_Simulation)
+
+    algo = ['LS', 'DCA', 'VA']
+    df_Simulation = {}
+    for i in range(len(algo)):
+        df_Simulation[algo[i]] = {}
+    df_Simulation['Summary'] = pd.DataFrame(columns=col_Simulation)
     df_Summary = pd.DataFrame(columns=col_Summary)
-    df_LS = {}
-    df_DCA = {}
-    df_VA = {}
 
     if method == 1:
         df_Price = direct(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/DT_Sim_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DT_Sim_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -319,7 +324,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 2:
         df_Price = monte_carlo(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/MC_Sim_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MC_Sim_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -335,7 +340,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
     elif method == 3:
         df_Price = bootstrap(df_SET, forecast_year)
-        writer = pd.ExcelWriter('output/BS_Sim_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/BS_Sim_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
         workbook = writer.book
         float_fmt = workbook.add_format({'num_format': '#,##0.00'})
         pct_fmt = workbook.add_format({'num_format': '0.00%'})
@@ -347,14 +352,17 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
 
     for year in range(forecast_year):
         df_Price_Y = df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True)
-        df_LS[year] = LS(df_Price_Y, init_Cash)
-        df_DCA[year] = DCA(df_Price_Y, init_Cash)
-        df_VA[year] = VA(df_Price_Y, init_Cash)
-        df_Simulation = df_Simulation.append({}, ignore_index=True)
-        df_Simulation.loc[year]['Year'] = year + 1
-        df_Simulation.loc[year]['IRR_LS'] = df_LS[year].loc[n_per_year]['IRR']
-        df_Simulation.loc[year]['IRR_DCA'] = df_DCA[year].loc[n_per_year]['IRR']
-        df_Simulation.loc[year]['IRR_VA'] = df_VA[year].loc[n_per_year]['IRR']
+        df_Simulation['LS'][year] = LS(df_Price_Y, init_Cash)
+        df_Simulation['DCA'][year] = DCA(df_Price_Y, init_Cash)
+        df_Simulation['VA'][year] = VA(df_Price_Y, init_Cash)
+        df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+        df_Simulation['Summary'].loc[year]['Year'] = year + 1
+        df_Simulation['Summary'].loc[year]['RR_LS'] = df_Simulation['LS'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['RR_DCA'] = df_Simulation['DCA'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['RR_VA'] = df_Simulation['VA'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['IRR_LS'] = df_Simulation['LS'][year].loc[n_per_year]['IRR']
+        df_Simulation['Summary'].loc[year]['IRR_DCA'] = df_Simulation['DCA'][year].loc[n_per_year]['IRR']
+        df_Simulation['Summary'].loc[year]['IRR_VA'] = df_Simulation['VA'][year].loc[n_per_year]['IRR']
 
         if iter == 0 and year <= 2:
             sheet_name = 'Stock'
@@ -364,7 +372,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
             df.to_excel(writer, sheet_name=sheet_name)
             worksheet = writer.sheets[sheet_name]
             for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+                worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
             body_fmt = {
                 'B': float_fmt,
@@ -381,46 +389,41 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
                 'M': float_fmt,
                 'N': float_fmt,
                 'O': pct_fmt,
+                'P': pct_fmt,
             }
-            sheet_name = 'LS_Y{}'.format(year + 1)
-            df = df_LS[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
-            sheet_name = 'DCA_Y{}'.format(year + 1)
-            df = df_DCA[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+            for i in range(len(algo)):
+                sheet_name = '{}_Y{}'.format(algo[i], year + 1)
+                df = df_Simulation[algo[i]][year].copy()
+                df.loc[n_per_year, 'RR'] = round(float(df.loc[n_per_year, 'RR'].rstrip('%')) / 100.0, 4)
+                df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
+                df = df.round(4)
+                df.to_excel(writer, sheet_name=sheet_name)
+                worksheet = writer.sheets[sheet_name]
+                for col, width in enumerate(get_col_widths(df, index=False), 1):
+                    worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
-            sheet_name = 'VA_Y{}'.format(year + 1)
-            df = df_VA[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
-
-    df_Simulation = df_Simulation.append({}, ignore_index=True)
-    df_Simulation.loc[forecast_year]['Year'] = 'Avg'
-    df_Simulation.loc[forecast_year]['SET_Final'] = df_Price.iloc[-1]['S']
-    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
-    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
-    df_Simulation.loc[forecast_year]['RR_Skew'] = df_Price.iloc[1:]['RR'].skew()
-    df_Simulation.loc[forecast_year]['RR_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
-    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation = df_Simulation.fillna('')
-    df_Simulation = df_Simulation.set_index('Year')
+    df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+    df_Simulation['Summary'].loc[forecast_year]['Year'] = 'Avg'
+    df_Simulation['Summary'].loc[forecast_year]['SET_Final'] = df_Price.iloc[-1]['S']
+    df_Simulation['Summary'].loc[forecast_year]['SET_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation['Summary'].loc[forecast_year]['SET_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation['Summary'].loc[forecast_year]['SET_Skew'] = df_Price.iloc[1:]['RR'].skew()
+    df_Simulation['Summary'].loc[forecast_year]['SET_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
+    df_Simulation['Summary'].loc[forecast_year]['RR_LS'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['RR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].loc[forecast_year]['RR_DCA'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['RR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].loc[forecast_year]['RR_VA'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['RR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(
+        gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'] = df_Simulation['Summary'].fillna('')
+    df_Simulation['Summary'] = df_Simulation['Summary'].set_index('Year')
 
     if iter == 0:
         body_fmt = {
@@ -432,14 +435,23 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
             'G': pct_fmt,
             'H': pct_fmt,
             'I': pct_fmt,
+            'J': pct_fmt,
+            'K': pct_fmt,
+            'L': pct_fmt,
         }
         sheet_name = 'Summary'
-        df = df_Simulation.copy()
+        df = df_Simulation['Summary'].copy()
         df.loc['Avg', 'SET_Final'] = df.loc['Avg', 'SET_Final'].astype(float).round(4)
-        df.loc['Avg', 'RR_Mean'] = round(float(df.loc['Avg', 'RR_Mean'].rstrip('%')) / 100.0, 4)
-        df.loc['Avg', 'RR_Std'] = round(float(df.loc['Avg', 'RR_Std'].rstrip('%')) / 100.0, 4)
-        df.loc['Avg', 'RR_Skew'] = df.loc['Avg', 'RR_Skew'].astype(float).round(4)
-        df.loc['Avg', 'RR_Kurt'] = df.loc['Avg', 'RR_Kurt'].astype(float).round(4)
+        df.loc['Avg', 'SET_Mean'] = round(float(df.loc['Avg', 'SET_Mean'].rstrip('%')) / 100.0, 4)
+        df.loc['Avg', 'SET_Std'] = round(float(df.loc['Avg', 'SET_Std'].rstrip('%')) / 100.0, 4)
+        df.loc['Avg', 'SET_Skew'] = df.loc['Avg', 'SET_Skew'].astype(float).round(4)
+        df.loc['Avg', 'SET_Kurt'] = df.loc['Avg', 'SET_Kurt'].astype(float).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_LS'] = (
+                df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_LS'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_DCA'] = (
+                df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_DCA'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_VA'] = (
+                df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'RR_VA'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'] = (
                 df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'] = (
@@ -455,14 +467,17 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
     # Summary of IRR #
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary['Iter'] = int(iter + 1)
-    df_Summary['SET_Final'] = df_Simulation.loc['Avg']['SET_Final']
-    df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
-    df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
-    df_Summary['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
-    df_Summary['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
-    df_Summary['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
-    df_Summary['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
-    df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
+    df_Summary['SET_Final'] = df_Simulation['Summary'].loc['Avg']['SET_Final']
+    df_Summary['SET_Mean'] = df_Simulation['Summary'].loc['Avg']['SET_Mean']
+    df_Summary['SET_Std'] = df_Simulation['Summary'].loc['Avg']['SET_Std']
+    df_Summary['SET_Skew'] = df_Simulation['Summary'].loc['Avg']['SET_Skew']
+    df_Summary['SET_Kurt'] = df_Simulation['Summary'].loc['Avg']['SET_Kurt']
+    df_Summary['RR_LS'] = df_Simulation['Summary'].loc['Avg']['RR_LS']
+    df_Summary['RR_DCA'] = df_Simulation['Summary'].loc['Avg']['RR_DCA']
+    df_Summary['RR_VA'] = df_Simulation['Summary'].loc['Avg']['RR_VA']
+    df_Summary['IRR_LS'] = df_Simulation['Summary'].loc['Avg']['IRR_LS']
+    df_Summary['IRR_DCA'] = df_Simulation['Summary'].loc['Avg']['IRR_DCA']
+    df_Summary['IRR_VA'] = df_Simulation['Summary'].loc['Avg']['IRR_VA']
 
     return df_Summary.values.tolist()
 
@@ -485,10 +500,13 @@ if __name__ == '__main__':
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary.iloc[-1]['Iter'] = 'Avg'
     df_Summary.iloc[-1]['SET_Final'] = df_Summary.iloc[:-1]['SET_Final'].mean()
-    df_Summary.iloc[-1]['RR_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
-    df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
+    df_Summary.iloc[-1]['SET_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['SET_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['SET_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['SET_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['SET_Skew'] = df_Summary.iloc[:-1]['SET_Skew'].mean()
+    df_Summary.iloc[-1]['SET_Kurt'] = df_Summary.iloc[:-1]['SET_Kurt'].mean()
+    df_Summary.iloc[-1]['RR_LS'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_DCA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['RR_VA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['IRR_LS'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['IRR_DCA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['IRR_VA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
@@ -498,19 +516,22 @@ if __name__ == '__main__':
     print(df_Summary)
 
     if method == 1:
-        writer = pd.ExcelWriter('output/DT_Sum_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/DT_Sum_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 2:
-        writer = pd.ExcelWriter('output/MC_Sum_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/MC_Sum_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     elif method == 3:
-        writer = pd.ExcelWriter('output/BS_Sum_Year_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+        writer = pd.ExcelWriter('output/BS_Sum_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
 
     sheet_name = 'Summary'
     df = df_Summary.copy()
-    df['RR', 'Mean'] = df['RR', 'Mean'].str.rstrip('%').astype('float') / 100.0
-    df['RR', 'Std'] = df['RR', 'Std'].str.rstrip('%').astype('float') / 100.0
+    df['SET', 'Mean'] = df['SET', 'Mean'].str.rstrip('%').astype('float') / 100.0
+    df['SET', 'Std'] = df['SET', 'Std'].str.rstrip('%').astype('float') / 100.0
+    df['RR', 'LS'] = df['RR', 'LS'].str.rstrip('%').astype('float') / 100.0
+    df['RR', 'DCA'] = df['RR', 'DCA'].str.rstrip('%').astype('float') / 100.0
+    df['RR', 'VA'] = df['RR', 'VA'].str.rstrip('%').astype('float') / 100.0
     df['IRR', 'LS'] = df['IRR', 'LS'].str.rstrip('%').astype('float') / 100.0
     df['IRR', 'DCA'] = df['IRR', 'DCA'].str.rstrip('%').astype('float') / 100.0
     df['IRR', 'VA'] = df['IRR', 'VA'].str.rstrip('%').astype('float') / 100.0
@@ -526,7 +547,10 @@ if __name__ == '__main__':
         'G': pct_fmt,
         'H': pct_fmt,
         'I': pct_fmt,
+        'J': pct_fmt,
+        'K': pct_fmt,
+        'L': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
-        worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+        worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
     writer.save()
