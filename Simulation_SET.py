@@ -33,7 +33,7 @@ col_Summary = ['Iter', 'SET_Close', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt
 
 # Simulation Config #
 method = 2  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
-iter = 5000
+iter = 1000
 forecast_year = 10
 init_Cash = 120000.0
 
