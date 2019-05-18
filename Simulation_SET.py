@@ -28,7 +28,8 @@ col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume'
                    'Inv.Asset Price', 'Capital Gain', 'Beg. Inv.Asset Value', 'Buy/Sell Inv.Asset Value', 'Net Inv.Asset Value',
                    'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Net Profit', 'RR', 'IRR']
 col_Simulation = ['Year', 'SET_Close', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'SET_Close', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'Std_LS', 'Std_DCA', 'Std_VA', 'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Summary = ['Iter', 'SET_Close', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'Std_LS', 'Std_DCA', 'Std_VA',
+               'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
 method = 2  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
@@ -440,7 +441,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
     df_Simulation['Summary'].iloc[-1]['RR_LS'] = (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_LS'].str.rstrip('%').astype('float').iloc[0] - RiskFree) / \
                                                  df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_LS'].str.rstrip('%').astype('float').iloc[0]
     df_Simulation['Summary'].iloc[-1]['RR_DCA'] = (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_DCA'].str.rstrip('%').astype('float').iloc[0] - RiskFree) / \
-                                                 df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_DCA'].str.rstrip('%').astype('float').iloc[0]
+                                                  df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_DCA'].str.rstrip('%').astype('float').iloc[0]
     df_Simulation['Summary'].iloc[-1]['RR_VA'] = (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_VA'].str.rstrip('%').astype('float').iloc[0] - RiskFree) / \
                                                  df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_VA'].str.rstrip('%').astype('float').iloc[0]
 
