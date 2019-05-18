@@ -467,14 +467,17 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
         }
         sheet_name = 'Summary'
         df = df_Simulation['Summary'].copy()
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Mean'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Mean'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Std'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Std'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_LS'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_LS'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_DCA'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_DCA'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_VA'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_VA'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'].str.rstrip('%').astype('float') / 100.0
-        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_VA'] = df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_VA'].str.rstrip('%').astype('float') / 100.0
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Mean'] = (df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Mean'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Std'] = (df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'SET_Std'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_LS'] = (
+                    df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_LS'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_DCA'] = (
+                    df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_DCA'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_VA'] = (
+                    df.loc[list(range(1, forecast_year + 1)) + ['Avg', 'Std'], 'RR_VA'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'] = (df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'] = (df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'].str.rstrip('%').astype('float') / 100.0).round(4)
+        df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_VA'] = (df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_VA'].str.rstrip('%').astype('float') / 100.0).round(4)
         df = df.round(4)
         df.to_excel(writer, sheet_name=sheet_name)
         worksheet = writer.sheets[sheet_name]
@@ -524,7 +527,7 @@ if __name__ == '__main__':
 
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary.iloc[-1]['Iter'] = 'Avg'
-    df_Summary.iloc[-1]['SET_Close'] = df_Summary.iloc[:-1]['SET_Close'].mean().round(2)
+    df_Summary.iloc[-1]['SET_Close'] = df_Summary.iloc[:-1]['SET_Close'].mean()
     df_Summary.iloc[-1]['SET_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['SET_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['SET_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['SET_Std'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['SET_Skew'] = df_Summary.iloc[:-1]['SET_Skew'].mean()
@@ -593,5 +596,5 @@ if __name__ == '__main__':
         'R': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
-        worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+        worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
     writer.save()
