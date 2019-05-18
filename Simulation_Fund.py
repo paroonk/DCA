@@ -17,7 +17,7 @@ col_Transaction = ['Month', 'Beg. Fund Volume', 'Buy/Sell Fund Volume', 'Net Fun
                    'Fund NAV', 'Fund Bid Price', 'Fund Offer Price', 'Beg. Fund Value', 'Capital Gain', 'Buy/Sell Fund Value', 'Net Fund Value',
                    'Beg. Cash', 'Change in Cash', 'Dividend Per Unit', 'Dividend Gain', 'Income Tax', 'Net Cash', 'Total Wealth',
                    'Acc. Capital Gain', 'Acc. Dividend Gain', 'Acc. Fee & Tax', 'Net Profit', 'RR', 'IRR']
-col_Simulation = ['Year', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Simulation = ['Year', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt',
                'RR_LS', 'RR_DCA', 'RR_VA', 'Std_LS', 'Std_DCA', 'Std_VA', 'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
@@ -354,10 +354,10 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     global col_Summary
 
     algo = ['LS', 'DCA', 'VA']
-    df_Simulation['Summary'] = {}
+    df_Simulation = {}
     for i in range(len(algo)):
-        df_Simulation['Summary'][algo[i]] = {}
-    df_Simulation['Summary']['Summary'] = pd.DataFrame(columns=col_Simulation)
+        df_Simulation[algo[i]] = {}
+    df_Simulation['Summary'] = pd.DataFrame(columns=col_Simulation)
     df_Summary = pd.DataFrame(columns=col_Summary)
 
     df_Price = pd.DataFrame(df_FundNAV.iloc[:, iter])
@@ -370,7 +370,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Data = pd.DataFrame(df_FundData.iloc[iter, :])
 
     selectFund = '1VAL-D'
-    writer = pd.ExcelWriter('output/Fund{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+    writer = pd.ExcelWriter('output/Fund_Sim_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     float2_fmt = workbook.add_format({'num_format': '#,##0.0000'})
@@ -574,7 +574,7 @@ if __name__ == '__main__':
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
     df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
     # todo Test only 10 funds
-    df_FundNAV = df_FundNAV.iloc[:, 0:10]
+    # df_FundNAV = df_FundNAV.iloc[:, 0:10]
 
     df_FundDiv = df_FundDiv.loc[df_FundNAV.index, df_FundNAV.columns].fillna(0)
     df_FundData = df_FundData.loc[df_FundNAV.columns, :]
@@ -611,7 +611,7 @@ if __name__ == '__main__':
     df_Summary.columns = pd.MultiIndex.from_tuples([(col.split('_')[0], col.split('_')[-1]) for col in df_Summary.columns])
     print(df_Summary.drop(columns=['Name'], level=1))
 
-    writer = pd.ExcelWriter('output/Fund{}Y_Summary_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
+    writer = pd.ExcelWriter('output/Fund_Sum_{}Y_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
     float2_fmt = workbook.add_format({'num_format': '#,##0.0000'})
@@ -621,7 +621,7 @@ if __name__ == '__main__':
     sheet_name = 'Summary'
     df = df_Summary.copy()
     df['NAV', 'Mean'] = df['NAV', 'Mean'].str.rstrip('%').astype('float') / 100.0
-    df['SET', 'Std'] = df['SET', 'Std'].str.rstrip('%').astype('float') / 100.0
+    df['NAV', 'Std'] = df['NAV', 'Std'].str.rstrip('%').astype('float') / 100.0
     df['RR', 'LS'] = df['RR', 'LS'].str.rstrip('%').astype('float') / 100.0
     df['RR', 'DCA'] = df['RR', 'DCA'].str.rstrip('%').astype('float') / 100.0
     df['RR', 'VA'] = df['RR', 'VA'].str.rstrip('%').astype('float') / 100.0
@@ -643,19 +643,19 @@ if __name__ == '__main__':
         'G': pct_fmt,
         'H': float_fmt,
         'I': float_fmt,
-        'G': pct_fmt,
-        'H': pct_fmt,
-        'I': pct_fmt,
         'J': pct_fmt,
         'K': pct_fmt,
         'L': pct_fmt,
-        'M': float2_fmt,
-        'N': float2_fmt,
-        'O': float2_fmt,
-        'P': pct_fmt,
-        'Q': pct_fmt,
-        'R': pct_fmt,
+        'M': pct_fmt,
+        'N': pct_fmt,
+        'O': pct_fmt,
+        'P': float2_fmt,
+        'Q': float2_fmt,
+        'R': float2_fmt,
+        'S': pct_fmt,
+        'T': pct_fmt,
+        'U': pct_fmt,
     }
     for col, width in enumerate(get_col_widths(df, index=False), 1):
-        worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+        worksheet.set_column(col, col, width + 3, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
     writer.save()
