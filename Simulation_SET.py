@@ -9,16 +9,6 @@ from matplotlib import style
 from scipy.stats.mstats import gmean
 from sklearn.utils import resample
 
-
-def get_col_widths(df, index=True):
-    if index:
-        idx_max = max([len(str(s)) for s in df.index.values] + [len(str(df.index.name))])
-        col_widths = [idx_max] + [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
-    else:
-        col_widths = [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
-    return col_widths
-
-
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
 pd.options.display.float_format = '{:.2f}'.format
@@ -36,6 +26,15 @@ method = 2  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
 iter = 1000
 forecast_year = 10
 init_Cash = 120000.0
+
+
+def get_col_widths(df, index=True):
+    if index:
+        idx_max = max([len(str(s)) for s in df.index.values] + [len(str(df.index.name))])
+        col_widths = [idx_max] + [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
+    else:
+        col_widths = [max([len(str(s)) for s in df[col].values] + [len(col)]) for col in df.columns]
+    return col_widths
 
 
 def direct(df_SET, forecast_year):

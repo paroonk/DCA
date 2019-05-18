@@ -16,10 +16,10 @@ n_per_year = 12
 col_Transaction = ['Month', 'Beg. Fund Volume', 'Buy/Sell Fund Volume', 'Net Fund Volume',
                    'Fund NAV', 'Fund Bid Price', 'Fund Offer Price', 'Beg. Fund Value', 'Capital Gain', 'Buy/Sell Fund Value', 'Net Fund Value',
                    'Beg. Cash', 'Change in Cash', 'Dividend Per Unit', 'Dividend Gain', 'Income Tax', 'Net Cash', 'Total Wealth',
-                   'Acc. Capital Gain', 'Acc. Dividend Gain', 'Acc. Fee & Tax', 'Net Profit', 'IRR']
-col_Simulation = ['Year', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_Last', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS',
-               'IRR_DCA', 'IRR_VA']
+                   'Acc. Capital Gain', 'Acc. Dividend Gain', 'Acc. Fee & Tax', 'Net Profit', 'RR', 'IRR']
+col_Simulation = ['Year', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt',
+               'RR_LS', 'RR_DCA', 'RR_VA', 'Std_LS', 'Std_DCA', 'Std_VA', 'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
 forecast_year = 5
@@ -451,10 +451,10 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Simulation = df_Simulation.append({}, ignore_index=True)
     df_Simulation.loc[forecast_year]['Year'] = 'Avg'
     df_Simulation.loc[forecast_year]['NAV_Last'] = df_Price.iloc[-1]['S']
-    df_Simulation.loc[forecast_year]['RR_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
-    df_Simulation.loc[forecast_year]['RR_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
-    df_Simulation.loc[forecast_year]['RR_Skew'] = df_Price.iloc[1:]['RR'].skew()
-    df_Simulation.loc[forecast_year]['RR_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
+    df_Simulation.loc[forecast_year]['NAV_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation.loc[forecast_year]['NAV_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation.loc[forecast_year]['NAV_Skew'] = df_Price.iloc[1:]['RR'].skew()
+    df_Simulation.loc[forecast_year]['NAV_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
     df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
     df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
@@ -475,10 +475,10 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
         sheet_name = 'Summary'
         df = df_Simulation.copy()
         df.loc['Avg', 'NAV_Last'] = df.loc['Avg', 'NAV_Last'].astype(float).round(4)
-        df.loc['Avg', 'RR_Mean'] = round(float(df.loc['Avg', 'RR_Mean'].rstrip('%')) / 100.0, 4)
-        df.loc['Avg', 'RR_Std'] = round(float(df.loc['Avg', 'RR_Std'].rstrip('%')) / 100.0, 4)
-        df.loc['Avg', 'RR_Skew'] = df.loc['Avg', 'RR_Skew'].astype(float).round(4)
-        df.loc['Avg', 'RR_Kurt'] = df.loc['Avg', 'RR_Kurt'].astype(float).round(4)
+        df.loc['Avg', 'NAV_Mean'] = round(float(df.loc['Avg', 'NAV_Mean'].rstrip('%')) / 100.0, 4)
+        df.loc['Avg', 'NAV_Std'] = round(float(df.loc['Avg', 'NAV_Std'].rstrip('%')) / 100.0, 4)
+        df.loc['Avg', 'NAV_Skew'] = df.loc['Avg', 'NAV_Skew'].astype(float).round(4)
+        df.loc['Avg', 'NAV_Kurt'] = df.loc['Avg', 'NAV_Kurt'].astype(float).round(4)
         df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'] = (
                 df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_LS'].str.rstrip('%').astype('float') / 100.0).round(4)
         df.loc[list(range(1, forecast_year + 1)) + ['Avg'], 'IRR_DCA'] = (
@@ -498,10 +498,10 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Summary['Fund_Name'] = df_FundData.loc[df_FundNAV.columns[iter], 'Local Name - Thai']
     df_Summary['Category_Morningstar'] = df_FundData.loc[df_FundNAV.columns[iter], 'Morningstar Category']
     df_Summary['NAV_Last'] = df_Simulation.loc['Avg']['NAV_Last']
-    df_Summary['RR_Mean'] = df_Simulation.loc['Avg']['RR_Mean']
-    df_Summary['RR_Std'] = df_Simulation.loc['Avg']['RR_Std']
-    df_Summary['RR_Skew'] = df_Simulation.loc['Avg']['RR_Skew']
-    df_Summary['RR_Kurt'] = df_Simulation.loc['Avg']['RR_Kurt']
+    df_Summary['NAV_Mean'] = df_Simulation.loc['Avg']['NAV_Mean']
+    df_Summary['NAV_Std'] = df_Simulation.loc['Avg']['NAV_Std']
+    df_Summary['NAV_Skew'] = df_Simulation.loc['Avg']['NAV_Skew']
+    df_Summary['NAV_Kurt'] = df_Simulation.loc['Avg']['NAV_Kurt']
     df_Summary['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
     df_Summary['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
     df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
@@ -546,10 +546,10 @@ if __name__ == '__main__':
     df_Summary = df_Summary.append({}, ignore_index=True)
     df_Summary.iloc[-1]['Iter'] = 'Avg'
     df_Summary.iloc[-1]['NAV_Last'] = df_Summary.iloc[:-1]['NAV_Last'].mean()
-    df_Summary.iloc[-1]['RR_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['RR_Std'].str.rstrip('%').astype('float') / 100.0).mean())
-    df_Summary.iloc[-1]['RR_Skew'] = df_Summary.iloc[:-1]['RR_Skew'].mean()
-    df_Summary.iloc[-1]['RR_Kurt'] = df_Summary.iloc[:-1]['RR_Kurt'].mean()
+    df_Summary.iloc[-1]['NAV_Mean'] = '{:.4%}'.format((df_Summary.iloc[:-1]['NAV_Mean'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['NAV_Std'] = '{:.4%}'.format((df_Summary.iloc[:-1]['NAV_Std'].str.rstrip('%').astype('float') / 100.0).mean())
+    df_Summary.iloc[-1]['NAV_Skew'] = df_Summary.iloc[:-1]['NAV_Skew'].mean()
+    df_Summary.iloc[-1]['NAV_Kurt'] = df_Summary.iloc[:-1]['NAV_Kurt'].mean()
     df_Summary.iloc[-1]['IRR_LS'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['IRR_DCA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0).mean())
     df_Summary.iloc[-1]['IRR_VA'] = '{:.4%}'.format((df_Summary.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0).mean())
