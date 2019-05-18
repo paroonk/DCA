@@ -129,6 +129,7 @@ def LS(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                            (df.loc[t]['Fund NAV'] - df.loc[t]['Fund Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -231,6 +232,7 @@ def DCA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                            (df.loc[t]['Fund NAV'] - df.loc[t]['Fund Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -337,6 +339,7 @@ def VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                            (df.loc[t]['Fund NAV'] - df.loc[t]['Fund Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -349,11 +352,13 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     global n_per_year
     global col_Simulation
     global col_Summary
-    df_Simulation = pd.DataFrame(columns=col_Simulation)
+
+    algo = ['LS', 'DCA', 'VA']
+    df_Simulation['Summary'] = {}
+    for i in range(len(algo)):
+        df_Simulation['Summary'][algo[i]] = {}
+    df_Simulation['Summary']['Summary'] = pd.DataFrame(columns=col_Simulation)
     df_Summary = pd.DataFrame(columns=col_Summary)
-    df_LS = {}
-    df_DCA = {}
-    df_VA = {}
 
     df_Price = pd.DataFrame(df_FundNAV.iloc[:, iter])
     df_Price.columns = ['S']
@@ -368,6 +373,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     writer = pd.ExcelWriter('output/Fund{}Y_Simulation_{}.xlsx'.format(forecast_year, pd.to_datetime('today').strftime('%Y%m%d_%H%M%S')))
     workbook = writer.book
     float_fmt = workbook.add_format({'num_format': '#,##0.00'})
+    float2_fmt = workbook.add_format({'num_format': '#,##0.0000'})
     pct_fmt = workbook.add_format({'num_format': '0.00%'})
     body_fmt = {
         'B': float_fmt,
@@ -375,28 +381,32 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
         'D': float_fmt,
     }
 
+    if df_Data.loc['Fund Code'].iloc[0] == selectFund:
+        sheet_name = 'Fund'
+        df = df_Price.copy()
+        df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
+        df.loc[1:] = df.loc[1:].astype(float).round(4)
+        df.to_excel(writer, sheet_name=sheet_name)
+        worksheet = writer.sheets[sheet_name]
+        for col, width in enumerate(get_col_widths(df, index=False), 1):
+            worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+
     for year in range(forecast_year):
         df_NAV_Y = df_Price.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['S'].reset_index(drop=True)
         df_Div_Y = df_Div.iloc[(year * n_per_year):((year + 1) * n_per_year) + 1]['Div'].reset_index(drop=True)
-        df_LS[year] = LS(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
-        df_DCA[year] = DCA(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
-        df_VA[year] = VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
-        df_Simulation = df_Simulation.append({}, ignore_index=True)
-        df_Simulation.loc[year]['Year'] = year + 1
-        df_Simulation.loc[year]['IRR_LS'] = df_LS[year].loc[n_per_year]['IRR']
-        df_Simulation.loc[year]['IRR_DCA'] = df_DCA[year].loc[n_per_year]['IRR']
-        df_Simulation.loc[year]['IRR_VA'] = df_VA[year].loc[n_per_year]['IRR']
+        df_Simulation['LS'][year] = LS(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
+        df_Simulation['DCA'][year] = DCA(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
+        df_Simulation['VA'][year] = VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash)
+        df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+        df_Simulation['Summary'].loc[year]['Year'] = year + 1
+        df_Simulation['Summary'].loc[year]['RR_LS'] = df_Simulation['LS'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['RR_DCA'] = df_Simulation['DCA'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['RR_VA'] = df_Simulation['VA'][year].loc[n_per_year]['RR']
+        df_Simulation['Summary'].loc[year]['IRR_LS'] = df_Simulation['LS'][year].loc[n_per_year]['IRR']
+        df_Simulation['Summary'].loc[year]['IRR_DCA'] = df_Simulation['DCA'][year].loc[n_per_year]['IRR']
+        df_Simulation['Summary'].loc[year]['IRR_VA'] = df_Simulation['VA'][year].loc[n_per_year]['IRR']
 
-        if df_Data.loc['Fund Code'].iloc[0] == selectFund and year == 0:
-            sheet_name = 'Stock'
-            df = df_Price.copy()
-            df.loc[0, 'S'] = df.loc[0, 'S'].astype(float).round(4)
-            df.loc[1:] = df.loc[1:].astype(float).round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
-
+        if df_Data.loc['Fund Code'].iloc[0] == selectFund:
             body_fmt = {
                 'B': float_fmt,
                 'C': float_fmt,
@@ -420,46 +430,57 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
                 'U': float_fmt,
                 'V': float_fmt,
                 'W': pct_fmt,
+                'X': pct_fmt,
             }
-            sheet_name = 'LS_Y{}'.format(year + 1)
-            df = df_LS[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
-            sheet_name = 'DCA_Y{}'.format(year + 1)
-            df = df_DCA[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+            for i in range(len(algo)):
+                sheet_name = '{}'.format(algo[i])
+                df = df_Simulation[algo[i]][year].copy()
+                df.index.names = ['Year{} / Month'.format(year + 1)]
+                df.loc[n_per_year, 'RR'] = float(df.loc[n_per_year, 'RR'].rstrip('%')) / 100.0
+                df.loc[n_per_year, 'IRR'] = float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0
+                df = df.round(4)
+                df.to_excel(writer, sheet_name=sheet_name, startrow=year * 15)
+                worksheet = writer.sheets[sheet_name]
+                for col, width in enumerate(get_col_widths(df, index=False), 1):
+                    worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
-            sheet_name = 'VA_Y{}'.format(year + 1)
-            df = df_VA[year].copy()
-            df.loc[n_per_year, 'IRR'] = round(float(df.loc[n_per_year, 'IRR'].rstrip('%')) / 100.0, 4)
-            df = df.round(4)
-            df.to_excel(writer, sheet_name=sheet_name)
-            worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+    df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+    df_Simulation['Summary'].iloc[-1]['Year'] = 'Avg'
+    df_Simulation['Summary'].iloc[-1]['NAV_Last'] = df_Price.iloc[-1]['S'].astype(float).round(4)
+    df_Simulation['Summary'].iloc[-1]['NAV_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
+    df_Simulation['Summary'].iloc[-1]['NAV_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
+    df_Simulation['Summary'].iloc[-1]['NAV_Skew'] = df_Price.iloc[1:]['RR'].skew().astype(float).round(4)
+    df_Simulation['Summary'].iloc[-1]['NAV_Kurt'] = df_Price.iloc[1:]['RR'].kurt().astype(float).round(4)
+    df_Simulation['Summary'].iloc[-1]['RR_LS'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_LS'].str.rstrip('%').astype('float').mean() / 100.0)
+    df_Simulation['Summary'].iloc[-1]['RR_DCA'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_DCA'].str.rstrip('%').astype('float').mean() / 100.0)
+    df_Simulation['Summary'].iloc[-1]['RR_VA'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_VA'].str.rstrip('%').astype('float').mean() / 100.0)
+    df_Simulation['Summary'].iloc[-1]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].iloc[-1]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
+    df_Simulation['Summary'].iloc[-1]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation['Summary'].iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
 
-    df_Simulation = df_Simulation.append({}, ignore_index=True)
-    df_Simulation.loc[forecast_year]['Year'] = 'Avg'
-    df_Simulation.loc[forecast_year]['NAV_Last'] = df_Price.iloc[-1]['S']
-    df_Simulation.loc[forecast_year]['NAV_Mean'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].mean() * n_per_year)
-    df_Simulation.loc[forecast_year]['NAV_Std'] = '{:.4%}'.format(df_Price.iloc[1:]['RR'].std() * np.sqrt(n_per_year))
-    df_Simulation.loc[forecast_year]['NAV_Skew'] = df_Price.iloc[1:]['RR'].skew()
-    df_Simulation.loc[forecast_year]['NAV_Kurt'] = df_Price.iloc[1:]['RR'].kurt()
-    df_Simulation.loc[forecast_year]['IRR_LS'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_LS'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_DCA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_DCA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation.loc[forecast_year]['IRR_VA'] = '{:.4%}'.format(gmean(1 + (df_Simulation.iloc[:-1]['IRR_VA'].str.rstrip('%').astype('float') / 100.0)) - 1)
-    df_Simulation = df_Simulation.fillna('')
-    df_Simulation = df_Simulation.set_index('Year')
+    df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+    df_Simulation['Summary'].iloc[-1]['Year'] = 'Std'
+    df_Simulation['Summary'].iloc[-1]['RR_LS'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_LS'].str.rstrip('%').astype('float').std() / 100.0)
+    df_Simulation['Summary'].iloc[-1]['RR_DCA'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_DCA'].str.rstrip('%').astype('float').std() / 100.0)
+    df_Simulation['Summary'].iloc[-1]['RR_VA'] = '{:.4%}'.format(df_Simulation['Summary'].iloc[:forecast_year]['RR_VA'].str.rstrip('%').astype('float').std() / 100.0)
+
+    df_Simulation['Summary'] = df_Simulation['Summary'].append({}, ignore_index=True)
+    df_Simulation['Summary'].iloc[-1]['Year'] = 'SR'
+    # Risk Free Rate 10Y = 1.8416, Risk Free Rate 5Y = 1.4760
+    RiskFree = 1.8416 if forecast_year == 10 else 1.4760
+    df_Simulation['Summary'].iloc[-1]['RR_LS'] = (
+            (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_LS'].str.rstrip('%').astype('float').iloc[0] - RiskFree) /
+            df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_LS'].str.rstrip('%').astype('float').iloc[0]).round(4)
+    df_Simulation['Summary'].iloc[-1]['RR_DCA'] = (
+            (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_DCA'].str.rstrip('%').astype('float').iloc[0] - RiskFree) /
+            df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_DCA'].str.rstrip('%').astype('float').iloc[0]).round(4)
+    df_Simulation['Summary'].iloc[-1]['RR_VA'] = (
+            (df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Avg', 'RR_VA'].str.rstrip('%').astype('float').iloc[0] - RiskFree) /
+            df_Simulation['Summary'].loc[df_Simulation['Summary']['Year'] == 'Std', 'RR_VA'].str.rstrip('%').astype('float').iloc[0]).round(4)
+
+    df_Simulation['Summary'] = df_Simulation['Summary'].fillna('')
+    df_Simulation['Summary'] = df_Simulation['Summary'].set_index('Year')
 
     if df_Data.loc['Fund Code'].iloc[0] == selectFund:
         body_fmt = {
@@ -471,9 +492,12 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
             'G': pct_fmt,
             'H': pct_fmt,
             'I': pct_fmt,
+            'J': pct_fmt,
+            'K': pct_fmt,
+            'L': pct_fmt,
         }
         sheet_name = 'Summary'
-        df = df_Simulation.copy()
+        df = df_Simulation['Summary'].copy()
         df.loc['Avg', 'NAV_Last'] = df.loc['Avg', 'NAV_Last'].astype(float).round(4)
         df.loc['Avg', 'NAV_Mean'] = round(float(df.loc['Avg', 'NAV_Mean'].rstrip('%')) / 100.0, 4)
         df.loc['Avg', 'NAV_Std'] = round(float(df.loc['Avg', 'NAV_Std'].rstrip('%')) / 100.0, 4)
@@ -497,14 +521,14 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Summary['Fund_Code'] = df_FundData.loc[df_FundNAV.columns[iter], 'Fund Code']
     df_Summary['Fund_Name'] = df_FundData.loc[df_FundNAV.columns[iter], 'Local Name - Thai']
     df_Summary['Category_Morningstar'] = df_FundData.loc[df_FundNAV.columns[iter], 'Morningstar Category']
-    df_Summary['NAV_Last'] = df_Simulation.loc['Avg']['NAV_Last']
-    df_Summary['NAV_Mean'] = df_Simulation.loc['Avg']['NAV_Mean']
-    df_Summary['NAV_Std'] = df_Simulation.loc['Avg']['NAV_Std']
-    df_Summary['NAV_Skew'] = df_Simulation.loc['Avg']['NAV_Skew']
-    df_Summary['NAV_Kurt'] = df_Simulation.loc['Avg']['NAV_Kurt']
-    df_Summary['IRR_LS'] = df_Simulation.loc['Avg']['IRR_LS']
-    df_Summary['IRR_DCA'] = df_Simulation.loc['Avg']['IRR_DCA']
-    df_Summary['IRR_VA'] = df_Simulation.loc['Avg']['IRR_VA']
+    df_Summary['NAV_Last'] = df_Simulation['Summary'].loc['Avg']['NAV_Last']
+    df_Summary['NAV_Mean'] = df_Simulation['Summary'].loc['Avg']['NAV_Mean']
+    df_Summary['NAV_Std'] = df_Simulation['Summary'].loc['Avg']['NAV_Std']
+    df_Summary['NAV_Skew'] = df_Simulation['Summary'].loc['Avg']['NAV_Skew']
+    df_Summary['NAV_Kurt'] = df_Simulation['Summary'].loc['Avg']['NAV_Kurt']
+    df_Summary['IRR_LS'] = df_Simulation['Summary'].loc['Avg']['IRR_LS']
+    df_Summary['IRR_DCA'] = df_Simulation['Summary'].loc['Avg']['IRR_DCA']
+    df_Summary['IRR_VA'] = df_Simulation['Summary'].loc['Avg']['IRR_VA']
 
     return df_Summary.values.tolist()
 
