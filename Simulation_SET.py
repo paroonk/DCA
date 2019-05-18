@@ -22,9 +22,9 @@ col_Summary = ['Iter', 'SET_Close', 'SET_Mean', 'SET_Std', 'SET_Skew', 'SET_Kurt
                'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
-method = 2  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
+method = 3  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
 iter = 1000
-forecast_year = 10
+forecast_year = 5
 init_Cash = 120000.0
 
 
