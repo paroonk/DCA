@@ -22,7 +22,7 @@ col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_La
                'RR_LS', 'RR_DCA', 'RR_VA', 'Std_LS', 'Std_DCA', 'Std_VA', 'SR_LS', 'SR_DCA', 'SR_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
-forecast_year = 5
+forecast_year = 10
 init_Cash = 120000.0
 
 
