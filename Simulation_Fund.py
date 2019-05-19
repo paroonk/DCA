@@ -15,12 +15,6 @@ style.use('ggplot')
 n_per_year = 12
 col_Transaction = ['Month', 'NAV', 'Bid Price', 'Offer Price', 'Required Value', 'Shares Bought', 'Shares Owned', 'Portfolio Value',
                    'DPS', 'Div After Tax', 'Total Cost', 'Average Cost', 'CFF', 'CFI', 'Net Cash', 'Net Wealth', 'RoR']
-# col_Simulation = ['NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt',
-#                   'Avg. Cost_LS', 'Avg. Cost_DCA', 'Avg. Cost_VA',
-#                   'RoR_LS', 'RoR_DCA', 'RoR_VA',
-#                   'Std_LS', 'Std_DCA', 'Std_VA',
-#                   'SR_LS', 'SR_DCA', 'SR_VA',
-#                   'IRR_LS', 'IRR_DCA', 'IRR_VA']
 col_Simulation = ['NAV', 'LS', 'DCA', 'VA']
 row_Simulation = ['Last', 'Avg. Cost', 'Mean', 'Std', 'SR', 'IRR']
 col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar',
@@ -35,8 +29,11 @@ col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar',
 forecast_year = 10
 init_Cash = 120000.0
 incomeTax = 10
-reinvest = True
-
+VA.a_Growth = 6
+VA.b_Growth = 12
+VA.c_Growth = 18
+Div_ReInvest = True
+VA_LimitBuy = 1
 
 def get_col_widths(df, index=True):
     if index:
@@ -51,7 +48,7 @@ def LS(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
     global n_per_year
     global col_Transaction
     global incomeTax
-    global reinvest
+    global Div_ReInvest
     df = pd.DataFrame(columns=col_Transaction)
 
     for t in range(0, len(df_NAV)):
@@ -74,7 +71,7 @@ def LS(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
             df.loc[t]['Total Cost'] = -df.loc[t]['CFI']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
         elif t in range(1, forecast_year * n_per_year):
-            if reinvest:
+            if Div_ReInvest:
                 df.loc[t]['Shares Bought'] = 0.0 if divmod(t, n_per_year)[1] != 0 else (init_Cash + df.loc[t - 1]['Net Cash']) / df.loc[t]['Offer Price']
             else:
                 df.loc[t]['Shares Bought'] = 0.0 if divmod(t, n_per_year)[1] != 0 else init_Cash / df.loc[t]['Offer Price']
@@ -115,7 +112,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
     global n_per_year
     global col_Transaction
     global incomeTax
-    global reinvest
+    global Div_ReInvest
     df = pd.DataFrame(columns=col_Transaction)
 
     for t in range(0, len(df_NAV)):
@@ -138,7 +135,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
             df.loc[t]['Total Cost'] = -df.loc[t]['CFI']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
         elif t in range(1, forecast_year * n_per_year):
-            if reinvest and (divmod(t, n_per_year)[1] != 0):
+            if Div_ReInvest and (divmod(t, n_per_year)[1] != 0):
                 df.loc[t]['Shares Bought'] = df.loc[t - 1]['Net Cash'] / (12 - divmod(t, n_per_year)[1]) / df.loc[t]['Offer Price']
             else:
                 df.loc[t]['Shares Bought'] = init_Cash / n_per_year / df.loc[t]['Offer Price']
@@ -179,7 +176,7 @@ def VA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
     global n_per_year
     global col_Transaction
     global incomeTax
-    global reinvest
+    global Div_ReInvest
     df = pd.DataFrame(columns=col_Transaction)
 
     for t in range(0, len(df_NAV)):
@@ -190,7 +187,7 @@ def VA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
         df.loc[t]['DPS'] = df_Div.loc[t]
         if t == 0:
-            # todo
+            # todo test
             df.loc[t]['Required Value'] =
             df.loc[t]['Shares Bought'] = init_Cash / n_per_year / df.loc[t]['Offer Price']
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought']
@@ -204,9 +201,9 @@ def VA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
             df.loc[t]['Total Cost'] = -df.loc[t]['CFI']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
         elif t in range(1, forecast_year * n_per_year):
-            # todo
+            # todo test
             df.loc[t]['Required Value'] =
-            if reinvest and (divmod(t, n_per_year)[1] != 0):
+            if Div_ReInvest and (divmod(t, n_per_year)[1] != 0):
                 df.loc[t]['Shares Bought'] = df.loc[t - 1]['Net Cash'] / (12 - divmod(t, n_per_year)[1]) / df.loc[t]['Offer Price']
             else:
                 df.loc[t]['Shares Bought'] = init_Cash / n_per_year / df.loc[t]['Offer Price']
@@ -223,6 +220,7 @@ def VA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
             df.loc[t]['RoR'] = (df.loc[t]['Net Wealth'] - (df.loc[t - 1]['Net Wealth'] if t != 1 else init_Cash) - df.loc[t]['CFF']) / (
                     (df.loc[t - 1]['Net Wealth'] if t != 1 else init_Cash) + df.loc[t]['CFF'])
         elif t == forecast_year * n_per_year:
+            df.loc[t]['Required Value'] = 0.0
             df.loc[t]['Shares Bought'] = -df.loc[t - 1]['Shares Owned']
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -246,113 +244,102 @@ def VA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
 
 
 
-
-
-
-
-
-    for t in range(0, n_per_year + 1):
-        df = df.append({}, ignore_index=True)
-        df.loc[t]['Month'] = t
-        if t == 0:
-            df.loc[t]['NAV'] = df_NAV_Y.loc[t]
-            df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Beg. Fund Volume'] = 0.0
-            df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Capital Gain'] = 0.0
-            df.loc[t]['Beg. Cash'] = init_Cash
-            diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Fund Value']
-            diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
-            df.loc[t]['Buy/Sell Fund Volume'] = diff / df.loc[t]['NAV']
-            df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
-            if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
-                df.loc[t]['Change in Cash'] = 0.0
-            df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
-            df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
-            df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
-            df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
-            df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
-            df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
-            df.loc[t]['Acc. Capital Gain'] = 0.0
-            df.loc[t]['Acc. Dividend Gain'] = 0.0
-            df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
-                                           (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax']
-            df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
-        elif t in range(1, n_per_year):
-            df.loc[t]['NAV'] = df_NAV_Y.loc[t]
-            df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Beg. Fund Volume'] = df.loc[t - 1]['Net Fund Volume']
-            df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Capital Gain'] = df.loc[t]['Beg. Fund Value'] - df.loc[t - 1]['Net Fund Value']
-            df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
-            diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Fund Value']
-            diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
-            df.loc[t]['Buy/Sell Fund Volume'] = diff / df.loc[t]['NAV']
-            df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
-            if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
-                df.loc[t]['Change in Cash'] = 0.0
-            df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
-            df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
-            df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
-            df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
-            df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
-            df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
-            df.loc[t]['Acc. Capital Gain'] = df.loc[t]['Capital Gain'] + df.loc[t - 1]['Acc. Capital Gain']
-            df.loc[t]['Acc. Dividend Gain'] = df.loc[t]['Dividend Gain'] + df.loc[t - 1]['Acc. Dividend Gain']
-            df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
-                                           (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
-                                          + df.loc[t - 1]['Acc. Fee & Tax']
-            df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
-        elif t == n_per_year:
-            df.loc[t]['NAV'] = df_NAV_Y.loc[t]
-            df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
-            df.loc[t]['Beg. Fund Volume'] = df.loc[t - 1]['Net Fund Volume']
-            df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Capital Gain'] = df.loc[t]['Beg. Fund Value'] - df.loc[t - 1]['Net Fund Value']
-            df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
-            df.loc[t]['Buy/Sell Fund Volume'] = -df.loc[t - 1]['Net Fund Volume']
-            df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
-            if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
-                df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
-            elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
-                df.loc[t]['Change in Cash'] = 0.0
-            df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
-            df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
-            df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
-            df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
-            df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
-            df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
-            df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
-            df.loc[t]['Acc. Capital Gain'] = df.loc[t]['Capital Gain'] + df.loc[t - 1]['Acc. Capital Gain']
-            df.loc[t]['Acc. Dividend Gain'] = df.loc[t]['Dividend Gain'] + df.loc[t - 1]['Acc. Dividend Gain']
-            df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
-                                           (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
-                                          + df.loc[t - 1]['Acc. Fee & Tax']
-            df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
-            df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
-            df.loc[t]['ROI'] = '{:.4%}'.format((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
-            df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
-
-    df = df.fillna('')
-    df['Month'] = df['Month'].astype('int')
-    df = df.set_index('Month')
-    return df
-
+    # for t in range(0, n_per_year + 1):
+    #     df = df.append({}, ignore_index=True)
+    #     df.loc[t]['Month'] = t
+    #     if t == 0:
+    #         df.loc[t]['NAV'] = df_NAV_Y.loc[t]
+    #         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Beg. Fund Volume'] = 0.0
+    #         df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Capital Gain'] = 0.0
+    #         df.loc[t]['Beg. Cash'] = init_Cash
+    #         diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Fund Value']
+    #         diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
+    #         df.loc[t]['Buy/Sell Fund Volume'] = diff / df.loc[t]['NAV']
+    #         df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
+    #         if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
+    #             df.loc[t]['Change in Cash'] = 0.0
+    #         df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
+    #         df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
+    #         df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
+    #         df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
+    #         df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
+    #         df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
+    #         df.loc[t]['Acc. Capital Gain'] = 0.0
+    #         df.loc[t]['Acc. Dividend Gain'] = 0.0
+    #         df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
+    #                                        (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax']
+    #         df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+    #     elif t in range(1, n_per_year):
+    #         df.loc[t]['NAV'] = df_NAV_Y.loc[t]
+    #         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Beg. Fund Volume'] = df.loc[t - 1]['Net Fund Volume']
+    #         df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Capital Gain'] = df.loc[t]['Beg. Fund Value'] - df.loc[t - 1]['Net Fund Value']
+    #         df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
+    #         diff = ((t + 1) * init_Cash / n_per_year) - df.loc[t]['Beg. Fund Value']
+    #         diff = diff if diff <= df.loc[t]['Beg. Cash'] else df.loc[t]['Beg. Cash']
+    #         df.loc[t]['Buy/Sell Fund Volume'] = diff / df.loc[t]['NAV']
+    #         df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
+    #         if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
+    #             df.loc[t]['Change in Cash'] = 0.0
+    #         df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
+    #         df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
+    #         df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
+    #         df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
+    #         df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
+    #         df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
+    #         df.loc[t]['Acc. Capital Gain'] = df.loc[t]['Capital Gain'] + df.loc[t - 1]['Acc. Capital Gain']
+    #         df.loc[t]['Acc. Dividend Gain'] = df.loc[t]['Dividend Gain'] + df.loc[t - 1]['Acc. Dividend Gain']
+    #         df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
+    #                                        (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
+    #                                       + df.loc[t - 1]['Acc. Fee & Tax']
+    #         df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+    #     elif t == n_per_year:
+    #         df.loc[t]['NAV'] = df_NAV_Y.loc[t]
+    #         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
+    #         df.loc[t]['Beg. Fund Volume'] = df.loc[t - 1]['Net Fund Volume']
+    #         df.loc[t]['Beg. Fund Value'] = df.loc[t]['Beg. Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Capital Gain'] = df.loc[t]['Beg. Fund Value'] - df.loc[t - 1]['Net Fund Value']
+    #         df.loc[t]['Beg. Cash'] = df.loc[t - 1]['Net Cash']
+    #         df.loc[t]['Buy/Sell Fund Volume'] = -df.loc[t - 1]['Net Fund Volume']
+    #         df.loc[t]['Buy/Sell Fund Value'] = df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['NAV']
+    #         if df.loc[t]['Buy/Sell Fund Volume'] > 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Offer Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] < 0.0:
+    #             df.loc[t]['Change in Cash'] = -df.loc[t]['Buy/Sell Fund Volume'] * df.loc[t]['Bid Price']
+    #         elif df.loc[t]['Buy/Sell Fund Volume'] == 0.0:
+    #             df.loc[t]['Change in Cash'] = 0.0
+    #         df.loc[t]['Dividend Per Unit'] = df_Div_Y.loc[t]
+    #         df.loc[t]['Dividend Gain'] = df.loc[t]['Dividend Per Unit'] * df.loc[t]['Beg. Fund Volume']
+    #         df.loc[t]['Income Tax'] = df.loc[t]['Dividend Gain'] * -0.1
+    #         df.loc[t]['Net Fund Volume'] = df.loc[t]['Beg. Fund Volume'] + df.loc[t]['Buy/Sell Fund Volume']
+    #         df.loc[t]['Net Fund Value'] = df.loc[t]['Net Fund Volume'] * df.loc[t]['NAV']
+    #         df.loc[t]['Net Cash'] = df.loc[t]['Beg. Cash'] + df.loc[t]['Change in Cash'] + df.loc[t]['Dividend Gain'] + df.loc[t]['Income Tax']
+    #         df.loc[t]['Total Wealth'] = df.loc[t]['Net Fund Value'] + df.loc[t]['Net Cash']
+    #         df.loc[t]['Acc. Capital Gain'] = df.loc[t]['Capital Gain'] + df.loc[t - 1]['Acc. Capital Gain']
+    #         df.loc[t]['Acc. Dividend Gain'] = df.loc[t]['Dividend Gain'] + df.loc[t - 1]['Acc. Dividend Gain']
+    #         df.loc[t]['Acc. Fee & Tax'] = ((df.loc[t]['NAV'] - df.loc[t]['Offer Price']) if (df.loc[t]['Buy/Sell Fund Volume'] > 0) else
+    #                                        (df.loc[t]['NAV'] - df.loc[t]['Bid Price'])) * df.loc[t]['Buy/Sell Fund Volume'] + df.loc[t]['Income Tax'] \
+    #                                       + df.loc[t - 1]['Acc. Fee & Tax']
+    #         df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
+    #         df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
+    #         df.loc[t]['ROI'] = '{:.4%}'.format((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
+    #         df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
 def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, iter):
     global n_per_year
