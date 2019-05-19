@@ -132,7 +132,7 @@ def LS(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
             df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
-            df.loc[t]['ROI'] = '{:.4%}'.format((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
+            df.loc[t]['ROI'] = '{:.4%}'.format(((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() + df['Dividend Gain'].sum() + df['Income Tax'].sum()) / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -236,7 +236,7 @@ def DCA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
             df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
-            df.loc[t]['ROI'] = '{:.4%}'.format((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
+            df.loc[t]['ROI'] = '{:.4%}'.format(((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() + df['Dividend Gain'].sum() + df['Income Tax'].sum()) / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -344,7 +344,7 @@ def VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
                                           + df.loc[t - 1]['Acc. Fee & Tax']
             df.loc[t]['Net Profit'] = df.loc[t]['Total Wealth'] - init_Cash
             df.loc[t]['RR'] = '{:.4%}'.format(df.loc[t]['Net Profit'] / init_Cash)
-            df.loc[t]['ROI'] = '{:.4%}'.format((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
+            df.loc[t]['ROI'] = '{:.4%}'.format(((df.loc[df['Change in Cash'] >= 0]['Change in Cash'].sum() + df['Dividend Gain'].sum() + df['Income Tax'].sum()) / -df.loc[df['Change in Cash'] < 0]['Change in Cash'].sum()) - 1)
             df.loc[t]['IRR'] = '{:.4%}'.format(((1 + np.irr(df['Change in Cash'].tolist())) ** n_per_year) - 1)
 
     df = df.fillna('')
@@ -613,7 +613,7 @@ if __name__ == '__main__':
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= forecast_year * n_per_year + 1]
     df_FundNAV = df_FundNAV.iloc[:forecast_year * n_per_year + 1].sort_index()
     # todo Test only 10 funds
-    df_FundNAV = df_FundNAV.iloc[:, 0:10]
+    # df_FundNAV = df_FundNAV.iloc[:, 0:10]
 
     df_FundDiv = df_FundDiv.loc[df_FundNAV.index, df_FundNAV.columns].fillna(0)
     df_FundData = df_FundData.loc[df_FundNAV.columns, :]
