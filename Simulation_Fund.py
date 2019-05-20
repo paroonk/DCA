@@ -30,7 +30,6 @@ n_per_year = 12
 init_Cash = 120000.0
 income_Tax = 10
 Div_ReInvest = True
-VA_LimitBuy = 2.0
 
 
 def get_col_widths(df, index=True):
@@ -170,7 +169,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash):
     return df
 
 
-def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
+def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash):
     global n_per_year
     global col_Transaction
     global income_Tax
@@ -187,7 +186,6 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         if t == 0:
             df.loc[t]['Required Value'] = init_Cash / n_per_year
             diff = df.loc[t]['Required Value']
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (init_Cash / df.loc[t]['Offer Price']) if diff > init_Cash else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -202,7 +200,6 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         elif t in range(1, forecast_year * n_per_year):
             df.loc[t]['Required Value'] = init_Cash / n_per_year + (df.loc[t - 1]['Required Value'] * (1 + VA_Growth / n_per_year / 100))
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t - 1]['Shares Owned'])
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Offer Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -219,7 +216,6 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         elif t == forecast_year * n_per_year:
             df.loc[t]['Required Value'] = 0.0
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t - 1]['Shares Owned'])
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Offer Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -242,7 +238,6 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
 
 def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, iter):
     global n_per_year
-    global VA_LimitBuy
     global col_Simulation
     global row_Simulation
     global col_Summary
@@ -283,10 +278,10 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
 
     df_Simulation['LS'] = LS(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash)
     df_Simulation['DCA'] = DCA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash)
-    df_Simulation['VA'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 0, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA6'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 6, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA12'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 12, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA18'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 18, VA_LimitBuy, forecast_year, init_Cash)
+    df_Simulation['VA'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 0, forecast_year, init_Cash)
+    df_Simulation['VA6'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 6, forecast_year, init_Cash)
+    df_Simulation['VA12'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 12, forecast_year, init_Cash)
+    df_Simulation['VA18'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 18, forecast_year, init_Cash)
 
     # Risk Free Rate 10Y = 1.8416, Risk Free Rate 5Y = 1.4760
     RiskFree = 1.8416 if forecast_year == 10 else 1.4760

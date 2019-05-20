@@ -32,7 +32,6 @@ forecast_Year = 10
 n_per_year = 12
 init_Cash = 120000.0
 Div_ReInvest = True
-VA_LimitBuy = np.inf
 
 
 def get_col_widths(df, index=True):
@@ -74,7 +73,7 @@ def monte_carlo(df_SET, forecast_year):
 
     init_S = df_SET.iloc[0]['SET']
     u = df_SET.iloc[1:]['RoR'].mean() * n_per_year
-    sigma = df_SET.iloc[1:]['RoR'].std() * np.sqrt(n_per_year)
+    sigma = df_SET.iloc[1:]['RoR'].std(ddof=0) * np.sqrt(n_per_year)
     dt = 1 / n_per_year
 
     for t in range(0, (forecast_year * n_per_year) + 1):
@@ -234,7 +233,7 @@ def DCA(df_Price, forecast_year, init_Cash):
     return df
 
 
-def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
+def VA(df_Price, VA_Growth, forecast_year, init_Cash):
     global n_per_year
     global col_Transaction
     global Div_ReInvest
@@ -247,7 +246,6 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         if t == 0:
             df.loc[t]['Required Value'] = init_Cash / n_per_year
             diff = df.loc[t]['Required Value']
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (init_Cash / df.loc[t]['Price']) if diff > init_Cash else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -260,7 +258,6 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         elif t in range(1, forecast_year * n_per_year):
             df.loc[t]['Required Value'] = init_Cash / n_per_year + (df.loc[t - 1]['Required Value'] * (1 + VA_Growth / n_per_year / 100))
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Price'] * df.loc[t - 1]['Shares Owned'])
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -275,7 +272,6 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         elif t == forecast_year * n_per_year:
             df.loc[t]['Required Value'] = 0.0
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Price'] * df.loc[t - 1]['Shares Owned'])
-            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -296,7 +292,6 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
 
 def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
-    global VA_LimitBuy
     global col_Simulation
     global row_Simulation
     global col_Summary
@@ -357,24 +352,23 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
 
     df_Simulation['LS'] = LS(df_Price['S'].reset_index(drop=True), forecast_year, init_Cash)
     df_Simulation['DCA'] = DCA(df_Price['S'].reset_index(drop=True), forecast_year, init_Cash)
-    VA_LimitBuy = np.inf
-    df_Simulation['VA'] = VA(df_Price['S'].reset_index(drop=True), 0, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA6'] = VA(df_Price['S'].reset_index(drop=True), 6, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA12'] = VA(df_Price['S'].reset_index(drop=True), 12, VA_LimitBuy, forecast_year, init_Cash)
-    df_Simulation['VA18'] = VA(df_Price['S'].reset_index(drop=True), 18, VA_LimitBuy, forecast_year, init_Cash)
+    df_Simulation['VA'] = VA(df_Price['S'].reset_index(drop=True), 0, forecast_year, init_Cash)
+    df_Simulation['VA6'] = VA(df_Price['S'].reset_index(drop=True), 6, forecast_year, init_Cash)
+    df_Simulation['VA12'] = VA(df_Price['S'].reset_index(drop=True), 12, forecast_year, init_Cash)
+    df_Simulation['VA18'] = VA(df_Price['S'].reset_index(drop=True), 18, forecast_year, init_Cash)
 
     # Risk Free Rate 10Y = 1.8416, Risk Free Rate 5Y = 1.4760
     RiskFree = 1.8416 if forecast_year == 10 else 1.4760
     for row in row_Simulation:
         df_Simulation['Summary'].loc['Last', 'SET'] = df_Price['S'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', 'SET'] = df_Price['RoR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', 'SET'] = df_Price['RoR'].iloc[1:].std() * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', 'SET'] = df_Price['RoR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', 'SET'] = (df_Simulation['Summary'].loc['Mean', 'SET'] - RiskFree / 100) / df_Simulation['Summary'].loc['Std', 'SET']
     # for column in col_Simulation:
     for column in ['LS', 'DCA', 'VA', 'VA6', 'VA12', 'VA18']:
         df_Simulation['Summary'].loc['Avg. Cost', column] = df_Simulation[column]['Average Cost'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', column] = df_Simulation[column]['RoR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['RoR'].iloc[1:].std() * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['RoR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', column] = (df_Simulation['Summary'].loc['Mean', column] - RiskFree / 100) / df_Simulation['Summary'].loc['Std', column]
         df_Simulation['Summary'].loc['IRR', column] = ((1 + np.irr(df_Simulation[column]['CFI'].tolist())) ** n_per_year) - 1
     df_Simulation['Summary'] = df_Simulation['Summary'].fillna('')
