@@ -32,6 +32,7 @@ forecast_Year = 10
 n_per_year = 12
 init_Cash = 120000.0
 Div_ReInvest = True
+VA_LimitBuy = np.inf
 
 
 def get_col_widths(df, index=True):
@@ -246,6 +247,7 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         if t == 0:
             df.loc[t]['Required Value'] = init_Cash / n_per_year
             diff = df.loc[t]['Required Value']
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (init_Cash / df.loc[t]['Price']) if diff > init_Cash else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -258,6 +260,7 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         elif t in range(1, forecast_year * n_per_year):
             df.loc[t]['Required Value'] = init_Cash / n_per_year + (df.loc[t - 1]['Required Value'] * (1 + VA_Growth / n_per_year / 100))
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Price'] * df.loc[t - 1]['Shares Owned'])
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -272,6 +275,7 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
         elif t == forecast_year * n_per_year:
             df.loc[t]['Required Value'] = 0.0
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Price'] * df.loc[t - 1]['Shares Owned'])
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Price'] * df.loc[t]['Shares Owned']
@@ -292,6 +296,7 @@ def VA(df_Price, VA_Growth, VA_LimitBuy, forecast_year, init_Cash):
 
 def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
+    global VA_LimitBuy
     global col_Simulation
     global row_Simulation
     global col_Summary

@@ -30,6 +30,7 @@ n_per_year = 12
 init_Cash = 120000.0
 income_Tax = 10
 Div_ReInvest = True
+VA_LimitBuy = 2.0
 
 
 def get_col_widths(df, index=True):
@@ -186,6 +187,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         if t == 0:
             df.loc[t]['Required Value'] = init_Cash / n_per_year
             diff = df.loc[t]['Required Value']
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (init_Cash / df.loc[t]['Offer Price']) if diff > init_Cash else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -200,6 +202,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         elif t in range(1, forecast_year * n_per_year):
             df.loc[t]['Required Value'] = init_Cash / n_per_year + (df.loc[t - 1]['Required Value'] * (1 + VA_Growth / n_per_year / 100))
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t - 1]['Shares Owned'])
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Offer Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -216,6 +219,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
         elif t == forecast_year * n_per_year:
             df.loc[t]['Required Value'] = 0.0
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t - 1]['Shares Owned'])
+            diff = diff if diff <= VA_LimitBuy * init_Cash / n_per_year else VA_LimitBuy * init_Cash / n_per_year
             df.loc[t]['Shares Bought'] = (df.loc[t - 1]['Net Cash'] / df.loc[t]['Offer Price']) if diff > df.loc[t - 1]['Net Cash'] else (diff / df.loc[t]['Bid Price'])
             df.loc[t]['Shares Owned'] = df.loc[t]['Shares Bought'] + df.loc[t - 1]['Shares Owned']
             df.loc[t]['Portfolio Value'] = df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned']
@@ -235,8 +239,10 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, VA_LimitBuy, forecast_year, init_Cash
     df = df.set_index('Month')
     return df
 
+
 def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, iter):
     global n_per_year
+    global VA_LimitBuy
     global col_Simulation
     global row_Simulation
     global col_Summary
@@ -277,7 +283,6 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
 
     df_Simulation['LS'] = LS(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash)
     df_Simulation['DCA'] = DCA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash)
-    VA_LimitBuy = np.inf
     df_Simulation['VA'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 0, VA_LimitBuy, forecast_year, init_Cash)
     df_Simulation['VA6'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 6, VA_LimitBuy, forecast_year, init_Cash)
     df_Simulation['VA12'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 12, VA_LimitBuy, forecast_year, init_Cash)
@@ -288,13 +293,13 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     for row in row_Simulation:
         df_Simulation['Summary'].loc['Last', 'NAV'] = df_NAV['NAV'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', 'NAV'] = df_NAV['RoR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', 'NAV'] = df_NAV['RoR'].iloc[1:].std() * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', 'NAV'] = df_NAV['RoR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', 'NAV'] = (df_Simulation['Summary'].loc['Mean', 'NAV'] - RiskFree / 100) / df_Simulation['Summary'].loc['Std', 'NAV']
     # for column in col_Simulation:
     for column in ['LS', 'DCA', 'VA', 'VA6', 'VA12', 'VA18']:
         df_Simulation['Summary'].loc['Avg. Cost', column] = df_Simulation[column]['Average Cost'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', column] = df_Simulation[column]['RoR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['RoR'].iloc[1:].std() * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['RoR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', column] = (df_Simulation['Summary'].loc['Mean', column] - RiskFree / 100) / df_Simulation['Summary'].loc['Std', column]
         df_Simulation['Summary'].loc['IRR', column] = ((1 + np.irr(df_Simulation[column]['CFI'].tolist())) ** n_per_year) - 1
     df_Simulation['Summary'] = df_Simulation['Summary'].fillna('')
