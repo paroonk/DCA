@@ -37,7 +37,7 @@ riskFree = 2.0324
 
 def get_col_widths(df, index=True):
     if index:
-        idx_max = [max([len(str(s)) for s in dataframe.index.get_level_values(idx)] + [len(str(idx))]) for idx in df.index.names]
+        idx_max = [max([len(str(s)) for s in df.index.get_level_values(idx)] + [len(str(idx))]) for idx in df.index.names]
         col_widths = idx_max + [max([len(str(s)) for s in df[col].values] + [len(str(x)) for x in col] if df.columns.nlevels > 1 else [len(str(col))]) for col in df.columns]
     else:
         col_widths = [max([len(str(s)) for s in df[col].values] + [len(str(x)) for x in col] if df.columns.nlevels > 1 else [len(str(col))]) for col in df.columns]
@@ -53,7 +53,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash, iter):
 
     for t in range(0, len(df_NAV)):
         df = df.append({}, ignore_index=True)
-        df.loc[t]['Period'] = divmod(iter, forecast_year * n_per_year)[1]
+        df.loc[t]['Period'] = divmod(iter, forecast_year * n_per_year)[1] + t
         df.loc[t]['NAV'] = df_NAV.loc[t]
         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
@@ -117,7 +117,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash, iter):
 
     for t in range(0, len(df_NAV)):
         df = df.append({}, ignore_index=True)
-        df.loc[t]['Period'] = divmod(iter, forecast_year * n_per_year)[1]
+        df.loc[t]['Period'] = divmod(iter, forecast_year * n_per_year)[1] + t
         df.loc[t]['NAV'] = df_NAV.loc[t]
         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
         df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
@@ -211,11 +211,12 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     if df_Data.loc['Fund Code'].iloc[0] == selectFund:
         sheet_name = selectFund
         df = df_NAV.copy()
+        df.index.names = [range(period, period + forecast_year * n_per_year + 1)]
         df.iloc[:, :-1] = df.iloc[:, :-1].applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
         df.iloc[:, -1:] = df.iloc[:, -1:].applymap(lambda x: round(x, 6) if isinstance(x, (int, float)) else x)
         df.to_excel(writer, sheet_name=sheet_name)
         worksheet = writer.sheets[sheet_name]
-        for col, width in enumerate(get_col_widths(df, index=False), 1):
+        for col, width in enumerate(get_col_widths(df, index=True), 1):
             worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
     df_Simulation['DCA'] = DCA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash, iter)
@@ -241,6 +242,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
 
     if df_Data.loc['Fund Code'].iloc[0] == selectFund:
         body_fmt = {
+            'A': None,
             'B': float_fmt,
             'C': float_fmt,
             'D': float_fmt,
@@ -264,8 +266,8 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
             df = df.applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
             df.to_excel(writer, sheet_name=sheet_name)
             worksheet = writer.sheets[sheet_name]
-            for col, width in enumerate(get_col_widths(df, index=False), 1):
-                worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+            for col, width in enumerate(get_col_widths(df)):
+                worksheet.set_column(col, col, width + 0, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
     body_fmt = {
         '2': float_fmt,
@@ -284,8 +286,8 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
         worksheet = writer.sheets[sheet_name]
         for row in range(df.shape[0]):
             worksheet.set_row(row + 1, None, body_fmt[str(row + 2)])
-        for col, width in enumerate(get_col_widths(df, index=False), 1):
-            worksheet.set_column(col, col, width + 4)
+        for col, width in enumerate(get_col_widths(df)):
+            worksheet.set_column(col, col, width + 0)
         writer.save()
 
     # Summary of IRR #
@@ -360,6 +362,7 @@ if __name__ == '__main__':
     df.to_excel(writer, sheet_name=sheet_name)
     worksheet = writer.sheets[sheet_name]
     body_fmt = {
+        'A': None,
         'B': text_fmt,
         'C': text_fmt,
         'D': float_fmt,
@@ -397,6 +400,6 @@ if __name__ == '__main__':
         'AJ': float_fmt,
         'AK': float_fmt,
     }
-    for col, width in enumerate(get_col_widths(df, index=False), 1):
+    for col, width in enumerate(get_col_widths(df)):
         worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
     writer.save()
