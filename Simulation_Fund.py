@@ -53,7 +53,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash, iter):
         df.loc[t]['Period'] = divmod(iter, (10 - forecast_year * n_per_year))[1] + 1 + t
         df.loc[t]['NAV'] = df_NAV.loc[t]
         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
-        df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
+        df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000 if df_Data.loc['Actual Front Load (%)'].iloc[0] > 0.0 else df.loc[t]['NAV'] + 0.0001
         df.loc[t]['DPS'] = df_Div.loc[t]
         if t == 0:
             df.loc[t]['Shares Owned'] = 0.0
@@ -107,7 +107,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash, iter):
         df.loc[t]['Period'] = divmod(iter, (10 - forecast_year * n_per_year))[1] + 1 + t
         df.loc[t]['NAV'] = df_NAV.loc[t]
         df.loc[t]['Bid Price'] = np.floor(df.loc[t]['NAV'] / (1 + df_Data.loc['Actual Deferred Load (%)'].iloc[0] / 100) * 10000) / 10000
-        df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000
+        df.loc[t]['Offer Price'] = np.ceil(df.loc[t]['NAV'] * (1 + df_Data.loc['Actual Front Load (%)'].iloc[0] / 100) * 10000) / 10000 if df_Data.loc['Actual Front Load (%)'].iloc[0] > 0.0 else df.loc[t]['NAV'] + 0.0001
         df.loc[t]['DPS'] = df_Div.loc[t]
         if t == 0:
             df.loc[t]['Shares Owned'] = 0.0
@@ -304,6 +304,8 @@ if __name__ == '__main__':
     # Filtering Funds #
     FundType = ['Thailand Fund Equity Small/Mid-Cap', 'Thailand Fund Equity Large-Cap']
     df_FundNAV = df_FundNAV.loc[:, df_FundData['Morningstar Category'].isin(FundType).tolist()]
+    # FundSelect = ['KFSDIV']
+    # df_FundNAV = df_FundNAV.loc[:, df_FundData['Fund Code'].isin(FundSelect).tolist()]
     total_year = 10
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= total_year * n_per_year + 1]
     df_FundNAV = df_FundNAV.iloc[:total_year * n_per_year + 1].sort_index()
