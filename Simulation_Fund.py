@@ -26,7 +26,7 @@ col_Iter = ['Iter', 'Fund_Code', 'Fund_Period',
             'Dividend_DCA', 'Dividend_VA', 'Dividend_VA6', 'Dividend_VA12', 'Dividend_VA18']
 
 # Simulation Config #
-forecast_year = 3
+forecast_year = 1
 n_per_year = 12
 init_Cash = 10000
 income_Tax = 10
