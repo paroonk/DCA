@@ -6,7 +6,6 @@ import pandas as pd
 import tqdm
 import xlsxwriter.utility
 from matplotlib import style
-from scipy.stats.mstats import gmean
 
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
