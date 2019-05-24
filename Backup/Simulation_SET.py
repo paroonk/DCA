@@ -17,7 +17,7 @@ col_Transaction = ['Month', 'Price', 'Required Value', 'Shares Bought', 'Shares 
                    'Total Cost', 'Average Cost', 'CFF', 'CFI', 'Net Cash', 'Net Wealth', 'RoR']
 col_Simulation = ['SET', 'LS', 'DCA', 'VA', 'VA6', 'VA12', 'VA18']
 row_Simulation = ['Last', 'Avg. Cost', 'Mean', 'Std', 'SR', 'IRR']
-col_Summary = ['Iter',
+col_Iter = ['Iter',
                'SET_Last', 'SET_Mean', 'SET_Std', 'SET_SR',
                'Avg. Cost_LS', 'Avg. Cost_DCA', 'Avg. Cost_VA', 'Avg. Cost_VA6', 'Avg. Cost_VA12', 'Avg. Cost_VA18',
                'Mean_LS', 'Mean_DCA', 'Mean_VA', 'Mean_VA6', 'Mean_VA12', 'Mean_VA18',
@@ -294,7 +294,7 @@ def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
     global row_Simulation
-    global col_Summary
+    global col_Iter
 
     df_Simulation = {}
     df_Simulation['Summary'] = pd.DataFrame(columns=col_Simulation, index=row_Simulation)
@@ -438,7 +438,7 @@ if __name__ == '__main__':
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, method, df_SET, forecast_Year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_Summary = pd.DataFrame(results, columns=col_Summary, dtype='object')
+    df_Summary = pd.DataFrame(results, columns=col_Iter, dtype='object')
     df_Summary.sort_values(by='Iter', inplace=True)
 
     df_Summary = df_Summary.append({}, ignore_index=True)

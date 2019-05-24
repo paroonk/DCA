@@ -18,7 +18,7 @@ col_Transaction = ['Month', 'Beg. Fund Volume', 'Buy/Sell Fund Volume', 'Net Fun
                    'Beg. Cash', 'Change in Cash', 'Dividend Per Unit', 'Dividend Gain', 'Income Tax', 'Net Cash', 'Total Wealth',
                    'Acc. Capital Gain', 'Acc. Dividend Gain', 'Acc. Fee & Tax', 'Net Profit', 'RR', 'ROI', 'IRR']
 col_Simulation = ['Year', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt', 'RR_LS', 'RR_DCA', 'RR_VA', 'ROI_LS', 'ROI_DCA', 'ROI_VA', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt',
+col_Iter = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar', 'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_Skew', 'NAV_Kurt',
                'RR.Mean_LS', 'RR.Mean_DCA', 'RR.Mean_VA', 'RR.Std_LS', 'RR.Std_DCA', 'RR.Std_VA', 'RR.SR_LS', 'RR.SR_DCA', 'RR.SR_VA',
                'ROI.Mean_LS', 'ROI.Mean_DCA', 'ROI.Mean_VA', 'ROI.Std_LS', 'ROI.Std_DCA', 'ROI.Std_VA', 'ROI.SR_LS', 'ROI.SR_DCA', 'ROI.SR_VA',
                'IRR_LS', 'IRR_DCA', 'IRR_VA']
@@ -356,7 +356,7 @@ def VA(df_NAV_Y, df_Div_Y, df_Data, init_Cash):
 def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
-    global col_Summary
+    global col_Iter
 
     algo = ['LS', 'DCA', 'VA']
     df_Simulation = {}
@@ -624,7 +624,7 @@ if __name__ == '__main__':
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_Summary = pd.DataFrame(results, columns=col_Summary, dtype='object')
+    df_Summary = pd.DataFrame(results, columns=col_Iter, dtype='object')
     df_Summary.sort_values(by='Iter', inplace=True)
 
     df_Summary = df_Summary.append({}, ignore_index=True)

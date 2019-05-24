@@ -28,7 +28,7 @@ col_Transaction = ['Month', 'Beg. Inv.Asset Volume', 'Buy/Sell Inv.Asset Volume'
                    'Inv.Asset Price', 'Beg. Inv.Asset Value', 'Capital Gain', 'Buy/Sell Inv.Asset Value', 'Net Inv.Asset Value',
                    'Beg. Cash', 'Change in Cash', 'Net Cash', 'Total Wealth', 'Net Profit', 'IRR']
 col_Simulation = ['Year', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
-col_Summary = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
+col_Iter = ['Iter', 'SET_Final', 'RR_Mean', 'RR_Std', 'RR_Skew', 'RR_Kurt', 'IRR_LS', 'IRR_DCA', 'IRR_VA']
 
 # Simulation Config #
 method = 1  # 1: Direct Test, 2: Monte Carlo, 3: Bootstrap
@@ -305,7 +305,7 @@ def VA(df_Price, init_Cash):
 def simulation(method, df_SET, forecast_year, init_Cash, iter):
     global n_per_year
     global col_Simulation
-    global col_Summary
+    global col_Iter
     df_Simulation = pd.DataFrame(columns=col_Simulation)
     df_Summary = pd.DataFrame(columns=col_Summary)
 

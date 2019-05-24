@@ -16,14 +16,14 @@ col_Transaction = ['Month', 'NAV', 'Bid Price', 'Offer Price', 'Required Value',
                    'DPS', 'Div After Tax', 'Total Cost', 'Average Cost', 'CFF', 'CFI', 'Net Cash', 'Net Wealth', 'RoR']
 col_Simulation = ['NAV', 'LS', 'DCA', 'VA', 'VA6', 'VA12', 'VA18']
 row_Simulation = ['Last', 'Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']
-col_Summary = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar',
+col_Iter = ['Iter', 'Fund_Code', 'Fund_Name', 'Category_Morningstar',
                'NAV_Last', 'NAV_Mean', 'NAV_Std', 'NAV_SR',
                'Avg. Cost_LS', 'Avg. Cost_DCA', 'Avg. Cost_VA', 'Avg. Cost_VA6', 'Avg. Cost_VA12', 'Avg. Cost_VA18',
                'Mean_LS', 'Mean_DCA', 'Mean_VA', 'Mean_VA6', 'Mean_VA12', 'Mean_VA18',
                'Std_LS', 'Std_DCA', 'Std_VA', 'Std_VA6', 'Std_VA12', 'Std_VA18',
                'SR_LS', 'SR_DCA', 'SR_VA', 'SR_VA6', 'SR_VA12', 'SR_VA18',
                'IRR_LS', 'IRR_DCA', 'IRR_VA', 'IRR_VA6', 'IRR_VA12', 'IRR_VA18',
-               'Dividend_LS', 'Dividend_DCA', 'Dividend_VA', 'Dividend_VA6', 'Dividend_VA12', 'Dividend_VA18']
+            'Dividend_LS', 'Dividend_DCA', 'Dividend_VA', 'Dividend_VA6', 'Dividend_VA12', 'Dividend_VA18']
 
 # Simulation Config #
 forecast_Year = 10
@@ -241,7 +241,7 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     global n_per_year
     global col_Simulation
     global row_Simulation
-    global col_Summary
+    global col_Iter
 
     df_Simulation = {}
     df_Simulation['Summary'] = pd.DataFrame(columns=col_Simulation, index=row_Simulation)
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     for result in tqdm.tqdm(pool.imap_unordered(partial(simulation, df_FundNAV, df_FundDiv, df_FundData, forecast_Year, init_Cash), range(iter)), total=iter):
         results.extend(result)
 
-    df_Summary = pd.DataFrame(results, columns=col_Summary, dtype='object')
+    df_Summary = pd.DataFrame(results, columns=col_Iter, dtype='object')
     df_Summary.sort_values(by='Iter', inplace=True)
 
     df_Summary = df_Summary.append({}, ignore_index=True)
