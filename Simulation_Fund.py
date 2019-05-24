@@ -61,7 +61,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash, iter):
             df.loc[t]['Wealth'] = df.loc[t]['Portfolio Value'] + df.loc[t]['Cash']
             df.loc[t]['CFF'] = init_Cash
             df.loc[t]['Shares Bought'] = df.loc[t]['CFF'] / df.loc[t]['Offer Price']
-            df.loc[t]['Div After Tax'] = 0.0
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = 0.0
         elif t in range(1, forecast_year * n_per_year):
@@ -71,7 +71,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash, iter):
             df.loc[t]['Wealth'] = df.loc[t]['Portfolio Value'] + df.loc[t]['Cash']
             df.loc[t]['CFF'] = init_Cash
             df.loc[t]['Shares Bought'] = (df.loc[t]['CFF'] + df.loc[t]['Cash'] / (forecast_year * n_per_year - t)) / df.loc[t]['Offer Price']
-            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t - 1]['Shares Owned'] * (1 - income_Tax / 100)
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = (df.loc[t - 1]['Offer Price'] * df.loc[t - 1]['Shares Bought']) + df.loc[t - 1]['Total Cost']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
@@ -83,7 +83,7 @@ def DCA(df_NAV, df_Div, df_Data, forecast_year, init_Cash, iter):
             df.loc[t]['Wealth'] = df.loc[t]['Portfolio Value'] + df.loc[t]['Cash']
             df.loc[t]['CFF'] = 0.0
             df.loc[t]['Shares Bought'] = -df.loc[t]['Shares Owned']
-            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t - 1]['Shares Owned'] * (1 - income_Tax / 100)
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = (df.loc[t - 1]['Offer Price'] * df.loc[t - 1]['Shares Bought']) + df.loc[t - 1]['Total Cost']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
@@ -117,7 +117,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash, iter):
             df.loc[t]['CFF'] = init_Cash
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned'])
             df.loc[t]['Shares Bought'] = diff / df.loc[t]['Bid Price'] if diff < (df.loc[t]['CFF'] + df.loc[t]['Cash']) else (df.loc[t]['CFF'] + df.loc[t]['Cash']) / df.loc[t]['Offer Price']
-            df.loc[t]['Div After Tax'] = 0.0
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = 0.0
         elif t in range(1, forecast_year * n_per_year):
@@ -129,7 +129,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash, iter):
             df.loc[t]['CFF'] = init_Cash
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned'])
             df.loc[t]['Shares Bought'] = diff / df.loc[t]['Bid Price'] if diff < (df.loc[t]['CFF'] + df.loc[t]['Cash']) else (df.loc[t]['CFF'] + df.loc[t]['Cash']) / df.loc[t]['Offer Price']
-            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t - 1]['Shares Owned'] * (1 - income_Tax / 100)
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = (df.loc[t - 1]['Offer Price'] * df.loc[t - 1]['Shares Bought']) + df.loc[t - 1]['Total Cost']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
@@ -143,7 +143,7 @@ def VA(df_NAV, df_Div, df_Data, VA_Growth, forecast_year, init_Cash, iter):
             df.loc[t]['CFF'] = 0.0
             diff = df.loc[t]['Required Value'] - (df.loc[t]['Bid Price'] * df.loc[t]['Shares Owned'])
             df.loc[t]['Shares Bought'] = diff / df.loc[t]['Bid Price'] if diff < (df.loc[t]['CFF'] + df.loc[t]['Cash']) else (df.loc[t]['CFF'] + df.loc[t]['Cash']) / df.loc[t]['Offer Price']
-            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t - 1]['Shares Owned'] * (1 - income_Tax / 100)
+            df.loc[t]['Div After Tax'] = df.loc[t]['DPS'] * df.loc[t]['Shares Owned'] * (1 - income_Tax / 100)
             df.loc[t]['CFI'] = -((df.loc[t]['Offer Price'] if df.loc[t]['Shares Bought'] >= 0.0 else df.loc[t]['Bid Price']) * df.loc[t]['Shares Bought']) + df.loc[t]['Div After Tax']
             df.loc[t]['Total Cost'] = (df.loc[t - 1]['Offer Price'] * df.loc[t - 1]['Shares Bought']) + df.loc[t - 1]['Total Cost']
             df.loc[t]['Average Cost'] = df.loc[t]['Total Cost'] / df.loc[t]['Shares Owned']
