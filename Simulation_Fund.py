@@ -25,7 +25,7 @@ col_Iter = ['Iter', 'Fund_Code', 'Fund_Period',
             'Dividend_DCA', 'Dividend_VA', 'Dividend_VA6', 'Dividend_VA12', 'Dividend_VA18']
 
 # Simulation Config #
-forecast_year = 1
+forecast_year = 5
 n_per_year = 12
 init_Cash = 10000
 income_Tax = 10
@@ -211,12 +211,12 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     for row in row_Simulation:
         df_Simulation['Summary'].loc['Last', 'NAV'] = df_NAV['NAV'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', 'NAV'] = df_NAV['RoR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', 'NAV'] = df_NAV['RoR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', 'NAV'] = df_NAV['RoR'].iloc[1:].std(ddof=1) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', 'NAV'] = (df_Simulation['Summary'].loc['Mean', 'NAV'] - riskFree / 100) / df_Simulation['Summary'].loc['Std', 'NAV']
     for column in ['DCA', 'VA', 'VA6', 'VA12', 'VA18']:
         df_Simulation['Summary'].loc['Avg. Cost', column] = df_Simulation[column]['Average Cost'].iloc[-1]
         df_Simulation['Summary'].loc['Mean', column] = df_Simulation[column]['TWR'].iloc[1:].mean() * n_per_year
-        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['TWR'].iloc[1:].std(ddof=0) * np.sqrt(n_per_year)
+        df_Simulation['Summary'].loc['Std', column] = df_Simulation[column]['TWR'].iloc[1:].std(ddof=1) * np.sqrt(n_per_year)
         df_Simulation['Summary'].loc['SR', column] = (df_Simulation['Summary'].loc['Mean', column] - riskFree / 100) / df_Simulation['Summary'].loc['Std', column]
         df_Simulation['Summary'].loc['IRR', column] = ((1 + np.irr(df_Simulation[column]['CFI'].tolist())) ** n_per_year) - 1
         df_Simulation['Summary'].loc['Dividend', column] = df_Simulation[column]['Div After Tax'].sum()
