@@ -25,7 +25,7 @@ col_Iter = ['Iter', 'Fund_Code', 'Fund_Period',
             'Dividend_DCA', 'Dividend_VA', 'Dividend_VA6', 'Dividend_VA12', 'Dividend_VA18']
 
 # Simulation Config #
-forecast_year = 1
+forecast_year = 5
 n_per_year = 12
 init_Cash = 10000
 income_Tax = 10
@@ -178,29 +178,29 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
     df_Div.columns = ['Div']
     df_Data = pd.DataFrame(df_FundData.iloc[fund, :])
 
-    # selectFund = 'KFSDIV'
-    # writer = pd.ExcelWriter('output/{}Y_P{}_{}.xlsx'.format(forecast_year, period + 1, selectFund))
-    # workbook = writer.book
-    # float_fmt = workbook.add_format({'num_format': '#,##0.00'})
-    # float2_fmt = workbook.add_format({'num_format': '#,##0.0000'})
-    # pct_fmt = workbook.add_format({'num_format': '0.00%'})
-    # body_fmt = {
-    #     'A': None,
-    #     'B': float_fmt,
-    #     'C': float_fmt,
-    #     'D': float_fmt,
-    # }
-    #
-    # if df_Data.loc['Fund Code'].iloc[0] == selectFund:
-    #     sheet_name = selectFund
-    #     df = df_NAV.copy()
-    #     df.index = range(period + 1, period + forecast_year * n_per_year + 2)
-    #     df.iloc[:, :-1] = df.iloc[:, :-1].applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
-    #     df.iloc[:, -1:] = df.iloc[:, -1:].applymap(lambda x: round(x, 6) if isinstance(x, (int, float)) else x)
-    #     df.to_excel(writer, sheet_name=sheet_name)
-    #     worksheet = writer.sheets[sheet_name]
-    #     for col, width in enumerate(get_col_widths(df)):
-    #         worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+    selectFund = 'KFSDIV'
+    writer = pd.ExcelWriter('output/{}Y_P{}_{}.xlsx'.format(forecast_year, period + 1, selectFund))
+    workbook = writer.book
+    float_fmt = workbook.add_format({'num_format': '#,##0.00'})
+    float2_fmt = workbook.add_format({'num_format': '#,##0.0000'})
+    pct_fmt = workbook.add_format({'num_format': '0.00%'})
+    body_fmt = {
+        'A': None,
+        'B': float_fmt,
+        'C': float_fmt,
+        'D': float_fmt,
+    }
+
+    if df_Data.loc['Fund Code'].iloc[0] == selectFund:
+        sheet_name = selectFund
+        df = df_NAV.copy()
+        df.index = range(period + 1, period + forecast_year * n_per_year + 2)
+        df.iloc[:, :-1] = df.iloc[:, :-1].applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
+        df.iloc[:, -1:] = df.iloc[:, -1:].applymap(lambda x: round(x, 6) if isinstance(x, (int, float)) else x)
+        df.to_excel(writer, sheet_name=sheet_name)
+        worksheet = writer.sheets[sheet_name]
+        for col, width in enumerate(get_col_widths(df)):
+            worksheet.set_column(col, col, width + 1, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
 
     df_Simulation['DCA'] = DCA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, forecast_year, init_Cash, iter)
     df_Simulation['VA'] = VA(df_NAV['NAV'].reset_index(drop=True), df_Div['Div'].reset_index(drop=True), df_Data, 0, forecast_year, init_Cash, iter)
@@ -222,55 +222,55 @@ def simulation(df_FundNAV, df_FundDiv, df_FundData, forecast_year, init_Cash, it
         df_Simulation['Summary'].loc['Dividend', column] = df_Simulation[column]['Div After Tax'].sum()
     df_Simulation['Summary'] = df_Simulation['Summary'].fillna('')
 
-    # if df_Data.loc['Fund Code'].iloc[0] == selectFund:
-    #     body_fmt = {
-    #         'A': None,
-    #         'B': float_fmt,
-    #         'C': float_fmt,
-    #         'D': float_fmt,
-    #         'E': float_fmt,
-    #         'F': float_fmt,
-    #         'G': float_fmt,
-    #         'H': float_fmt,
-    #         'I': float_fmt,
-    #         'J': float_fmt,
-    #         'K': float_fmt,
-    #         'L': float_fmt,
-    #         'M': float_fmt,
-    #         'N': float_fmt,
-    #         'O': float_fmt,
-    #         'P': float_fmt,
-    #         'Q': pct_fmt,
-    #     }
-    #     for Algo in col_Simulation[1:]:
-    #         sheet_name = '{}'.format(Algo)
-    #         df = df_Simulation[Algo].copy()
-    #         df = df.applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
-    #         df.to_excel(writer, sheet_name=sheet_name)
-    #         worksheet = writer.sheets[sheet_name]
-    #         for col, width in enumerate(get_col_widths(df)):
-    #             worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
-    #
-    # body_fmt = {
-    #     '2': float_fmt,
-    #     '3': float_fmt,
-    #     '4': pct_fmt,
-    #     '5': pct_fmt,
-    #     '6': float2_fmt,
-    #     '7': pct_fmt,
-    #     '8': float_fmt,
-    # }
-    # if df_Data.loc['Fund Code'].iloc[0] == selectFund:
-    #     sheet_name = 'Summary'
-    #     df = df_Simulation['Summary'].copy()
-    #     df = df.applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
-    #     df.to_excel(writer, sheet_name=sheet_name)
-    #     worksheet = writer.sheets[sheet_name]
-    #     for row in range(df.shape[0]):
-    #         worksheet.set_row(row + 1, None, body_fmt[str(row + 2)])
-    #     for col, width in enumerate(get_col_widths(df)):
-    #         worksheet.set_column(col, col, width + 1)
-    #     writer.save()
+    if df_Data.loc['Fund Code'].iloc[0] == selectFund:
+        body_fmt = {
+            'A': None,
+            'B': float_fmt,
+            'C': float_fmt,
+            'D': float_fmt,
+            'E': float_fmt,
+            'F': float_fmt,
+            'G': float_fmt,
+            'H': float_fmt,
+            'I': float_fmt,
+            'J': float_fmt,
+            'K': float_fmt,
+            'L': float_fmt,
+            'M': float_fmt,
+            'N': float_fmt,
+            'O': float_fmt,
+            'P': float_fmt,
+            'Q': pct_fmt,
+        }
+        for Algo in col_Simulation[1:]:
+            sheet_name = '{}'.format(Algo)
+            df = df_Simulation[Algo].copy()
+            df = df.applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
+            df.to_excel(writer, sheet_name=sheet_name)
+            worksheet = writer.sheets[sheet_name]
+            for col, width in enumerate(get_col_widths(df)):
+                worksheet.set_column(col, col, width + 2, body_fmt[xlsxwriter.utility.xl_col_to_name(col)])
+
+    body_fmt = {
+        '2': float_fmt,
+        '3': float_fmt,
+        '4': pct_fmt,
+        '5': pct_fmt,
+        '6': float2_fmt,
+        '7': pct_fmt,
+        '8': float_fmt,
+    }
+    if df_Data.loc['Fund Code'].iloc[0] == selectFund:
+        sheet_name = 'Summary'
+        df = df_Simulation['Summary'].copy()
+        df = df.applymap(lambda x: round(x, 4) if isinstance(x, (int, float)) else x)
+        df.to_excel(writer, sheet_name=sheet_name)
+        worksheet = writer.sheets[sheet_name]
+        for row in range(df.shape[0]):
+            worksheet.set_row(row + 1, None, body_fmt[str(row + 2)])
+        for col, width in enumerate(get_col_widths(df)):
+            worksheet.set_column(col, col, width + 1)
+        writer.save()
 
     # Summary #
     df_Result = df_Result.append({}, ignore_index=True)
@@ -301,10 +301,10 @@ if __name__ == '__main__':
     df_FundData = pd.read_pickle('data/FundData.pkl')
 
     # Filtering Funds #
-    FundType = ['Thailand Fund Equity Small/Mid-Cap', 'Thailand Fund Equity Large-Cap']
-    df_FundNAV = df_FundNAV.loc[:, df_FundData['Morningstar Category'].isin(FundType).tolist()]
-    # FundSelect = ['KFSDIV']
-    # df_FundNAV = df_FundNAV.loc[:, df_FundData['Fund Code'].isin(FundSelect).tolist()]
+    # FundType = ['Thailand Fund Equity Small/Mid-Cap', 'Thailand Fund Equity Large-Cap']
+    # df_FundNAV = df_FundNAV.loc[:, df_FundData['Morningstar Category'].isin(FundType).tolist()]
+    FundSelect = ['KFSDIV']
+    df_FundNAV = df_FundNAV.loc[:, df_FundData['Fund Code'].isin(FundSelect).tolist()]
     total_year = 10
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= total_year * n_per_year + 1]
     df_FundNAV = df_FundNAV.iloc[:total_year * n_per_year + 1].sort_index()
