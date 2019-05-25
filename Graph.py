@@ -5,13 +5,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xlsxwriter.utility
 from matplotlib import style
-from scipy import stats
+from scipy import optimize
 
 pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
 pd.options.display.float_format = '{:.2f}'.format
 # style.use('ggplot')
-sns.set(font_scale=1.1)
+# sns.set(font_scale=1.1)
+
+
+def gaussian(x, a, mean, sigma):
+    return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
+
 
 if __name__ == '__main__':
     # Excel to Pickle #
@@ -42,11 +47,30 @@ if __name__ == '__main__':
     df['3Y'] = pd.read_pickle('data/Summary_3Y.pkl')
     df['5Y'] = pd.read_pickle('data/Summary_5Y.pkl')
 
-    fig = plt.figure(figsize=(10, 7), dpi=80)
-    # ax = sns.distplot(df_1Y['Avg. Cost'], bins=20, hist_kws=dict(edgecolor='k', linewidth=1), kde_kws={'linestyle':'--'})
+    graph = 'Avg. Cost'
 
-    for year in ['1Y', '3Y', '5Y']:
-        ax = sns.kdeplot(df[year]['Avg. Cost'], linestyle='--', label=year)
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey='row', figsize=(10, 10), dpi=80)
+    fig2, ax2 = plt.subplots(nrows=3, ncols=1, sharex=True, sharey='row', figsize=(10, 10), dpi=80)
+    palette = plt.get_cmap('tab10')
+    p_index = 0
+    for row, year in enumerate(['1Y', '3Y', '5Y']):
+        for col, algorithm in enumerate(['DCA', 'VA']):
+            sns.distplot(df[year].loc[df[year]['Algorithm'] == algorithm][graph], bins=30, kde=False, label='{} {}'.format(algorithm, year), color=palette(p_index), hist_kws=dict(edgecolor='k', linewidth=1), ax=ax[row, col])
+            sns.kdeplot(df[year].loc[df[year]['Algorithm'] == algorithm][graph], label='{} {}'.format(algorithm, year), linestyle='--', ax=ax2[row])
+            p_index = p_index + 1
+            ax[row, col].set_title('{} {}'.format(algorithm, year))
+            ax[row, col].tick_params(labelbottom=True)
+            ax[row, col].set(ylabel='Frequency')
+        ax2[row].set_title('{}'.format(year))
+        ax2[row].tick_params(labelbottom=True)
+
+    fig.suptitle('Distributions of {}'.format(graph), y=1.0, fontsize=17)
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.92)
+    fig2.suptitle('Normal Distribution Curves of {}'.format(graph), y=1.0, fontsize=17)
+    fig2.tight_layout()
+    fig2.subplots_adjust(top=0.92)
+    plt.show()
 
     # bplot = sns.boxplot(y='Avg. Cost', x='Algorithm',
     #                     data=df_1Y,
@@ -58,5 +82,3 @@ if __name__ == '__main__':
     #                       marker='o',
     #                       alpha=0.5,
     #                       color='black')
-    plt.title = 'Average Cost'
-    plt.show()
