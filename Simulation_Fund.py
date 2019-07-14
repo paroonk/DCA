@@ -26,7 +26,7 @@ col_Iter = ['Iter', 'Fund_Code', 'Fund_Period',
             'Wealth/Cost_DCA', 'Wealth/Cost_VA', 'Wealth/Cost_VA6', 'Wealth/Cost_VA12', 'Wealth/Cost_VA18']
 
 # Simulation Config #
-forecast_year = 1
+forecast_year = 5
 n_per_year = 12
 init_Cash = 10000
 income_Tax = 10
@@ -304,10 +304,10 @@ if __name__ == '__main__':
     df_FundData = pd.read_pickle('data/FundData.pkl')
 
     # Filtering Funds #
-    # FundType = ['Thailand Fund Equity Small/Mid-Cap', 'Thailand Fund Equity Large-Cap']
-    # df_FundNAV = df_FundNAV.loc[:, df_FundData['Morningstar Category'].isin(FundType).tolist()]
-    FundSelect = ['KFSDIV']
-    df_FundNAV = df_FundNAV.loc[:, df_FundData['Fund Code'].isin(FundSelect).tolist()]
+    FundType = ['Thailand Fund Equity Small/Mid-Cap', 'Thailand Fund Equity Large-Cap']
+    df_FundNAV = df_FundNAV.loc[:, df_FundData['Morningstar Category'].isin(FundType).tolist()]
+    # FundSelect = ['KFSDIV']
+    # df_FundNAV = df_FundNAV.loc[:, df_FundData['Fund Code'].isin(FundSelect).tolist()]
     total_year = 10
     df_FundNAV = df_FundNAV.loc[:, df_FundNAV.count() >= total_year * n_per_year + 1]
     df_FundNAV = df_FundNAV.iloc[:total_year * n_per_year + 1].sort_index()
