@@ -11,28 +11,28 @@ pd.set_option('expand_frame_repr', False)
 # pd.set_option('max_rows', 7)
 pd.options.display.float_format = '{:.2f}'.format
 # style.use('ggplot')
-
+indicator_list = ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend', 'Wealth Per Cost']
 
 if __name__ == '__main__':
     # Excel to Pickle #
-    # df_1Y = pd.read_excel('data/#Summary_1Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
-    # df_1Y_Ind = {}
-    # for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']:
-    #     df_1Y_Ind[ind] = df_1Y[ind].melt(var_name='Algorithm', value_vars=df_1Y[ind].columns, value_name=ind)
-    # df_1Y = pd.concat([df_1Y_Ind[ind] for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']], axis=1).T.drop_duplicates().T
-    # df_1Y.to_pickle('data/Summary_1Y.pkl')
-    # df_3Y = pd.read_excel('data/#Summary_3Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
-    # df_3Y_Ind = {}
-    # for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']:
-    #     df_3Y_Ind[ind] = df_3Y[ind].melt(var_name='Algorithm', value_vars=df_3Y[ind].columns, value_name=ind)
-    # df_3Y = pd.concat([df_3Y_Ind[ind] for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']], axis=1).T.drop_duplicates().T
-    # df_3Y.to_pickle('data/Summary_3Y.pkl')
-    # df_5Y = pd.read_excel('data/#Summary_5Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
-    # df_5Y_Ind = {}
-    # for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']:
-    #     df_5Y_Ind[ind] = df_5Y[ind].melt(var_name='Algorithm', value_vars=df_5Y[ind].columns, value_name=ind)
-    # df_5Y = pd.concat([df_5Y_Ind[ind] for ind in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR', 'Dividend']], axis=1).T.drop_duplicates().T
-    # df_5Y.to_pickle('data/Summary_5Y.pkl')
+    df_1Y = pd.read_excel('data/#Summary_1Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
+    df_1Y_Ind = {}
+    for ind in indicator_list:
+        df_1Y_Ind[ind] = df_1Y[ind].melt(var_name='Algorithm', value_vars=df_1Y[ind].columns, value_name=ind)
+    df_1Y = pd.concat([df_1Y_Ind[ind] for ind in indicator_list], axis=1).T.drop_duplicates().T
+    df_1Y.to_pickle('data/Summary_1Y.pkl')
+    df_3Y = pd.read_excel('data/#Summary_3Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
+    df_3Y_Ind = {}
+    for ind in indicator_list:
+        df_3Y_Ind[ind] = df_3Y[ind].melt(var_name='Algorithm', value_vars=df_3Y[ind].columns, value_name=ind)
+    df_3Y = pd.concat([df_3Y_Ind[ind] for ind in indicator_list], axis=1).T.drop_duplicates().T
+    df_3Y.to_pickle('data/Summary_3Y.pkl')
+    df_5Y = pd.read_excel('data/#Summary_5Y.xlsx', sheet_name='Result', header=[0, 1], index_col=[0])
+    df_5Y_Ind = {}
+    for ind in indicator_list:
+        df_5Y_Ind[ind] = df_5Y[ind].melt(var_name='Algorithm', value_vars=df_5Y[ind].columns, value_name=ind)
+    df_5Y = pd.concat([df_5Y_Ind[ind] for ind in indicator_list], axis=1).T.drop_duplicates().T
+    df_5Y.to_pickle('data/Summary_5Y.pkl')
 
     # Import Pickle #
     df = {}
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     df['3Y'] = pd.read_pickle('data/Summary_3Y.pkl')
     df['5Y'] = pd.read_pickle('data/Summary_5Y.pkl')
 
-    for graph in ['Avg. Cost', 'Mean', 'Std', 'SR', 'IRR']:
+    for graph in indicator_list:
         fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey='row', figsize=(10, 9), dpi=80)
         fig2, ax2 = plt.subplots(nrows=3, ncols=1, sharex=True, sharey='row', figsize=(10, 6), dpi=80)
         palette = plt.get_cmap('tab10')
